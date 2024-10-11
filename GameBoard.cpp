@@ -58,6 +58,9 @@ GameBoard::GameBoard(const string& fen) {
                 board[row][column] = Pieces::blackKing;
                 blackKingPosition = { row, column };
                 break;
+            default:
+                cout << "Invalid piece in the board." << endl;
+                exit(1);
             }
             ++column;
         }
