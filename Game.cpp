@@ -46,7 +46,3 @@ pair<Move, bool> Game::processUserInput(string& userInput) {
 
     return { Move(rowStart, columnStart, rowEnd, columnEnd), true };
 }
-
-bool GameBoard::validPosition(int row, int column) {
-    return row >= 0 && row < 8 && column >= 0 && column < 8;
-}

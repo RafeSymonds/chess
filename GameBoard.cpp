@@ -59,8 +59,8 @@ GameBoard::GameBoard(const string& fen) {
                 blackKingPosition = { row, column };
                 break;
             default:
-                cout << "Invalid piece in the board." << endl;
-                exit(1);
+                int val = c - '0';
+                column += static_cast<short>(val);
             }
             ++column;
         }
@@ -92,6 +92,7 @@ bool GameBoard::validPosition(int row, int column) {
 }
 
 bool GameBoard::kingInCheck(Move& move) {
+    cout << move.start.column;
     return false;
 }
 
@@ -101,19 +102,19 @@ Pieces& GameBoard::getPieceFromPosition(Position& position) {
 
 
 bool GameBoard::bishopMoveCheck(Move& move) {
-    short rowDiff = abs(move.start.row - move.end.row);
-    short colDiff = abs(move.start.row - move.end.row);
+    int rowDiff = abs(move.start.row - move.end.row);
+    int colDiff = abs(move.start.row - move.end.row);
 
     if (rowDiff != colDiff) {
         return false;
     }
 
-    short row = min(move.start.row, move.end.row);
-    short endRow = max(move.start.row, move.end.row);
+    int row = min(move.start.row, move.end.row);
+    int endRow = max(move.start.row, move.end.row);
 
     short col = min(move.start.column, move.end.column);
 
-    for (; row < move.end.row; ++row, ++col) {
+    for (; row < endRow; ++row, ++col) {
         if (board[row][col] != Pieces::none) {
             return false;
         }
@@ -123,16 +124,16 @@ bool GameBoard::bishopMoveCheck(Move& move) {
 
 
 bool GameBoard::rookMoveCheck(Move& move) {
-    short rowDiff = abs(move.start.row - move.end.row);
-    short colDiff = abs(move.start.row - move.end.row);
+    int rowDiff = abs(move.start.row - move.end.row);
+    int colDiff = abs(move.start.row - move.end.row);
 
     if (rowDiff != 0 && colDiff != 0) {
         return false;
     }
 
 
-    short row = min(move.start.row, move.end.row);
-    short maxRow = min(move.start.row, move.end.row);
+    int row = min(move.start.row, move.end.row);
+    int maxRow = min(move.start.row, move.end.row);
 
     for (; row < maxRow; ++row) {
         if (board[row][move.start.column] != Pieces::none) {
@@ -140,8 +141,8 @@ bool GameBoard::rookMoveCheck(Move& move) {
         }
     }
 
-    short col = min(move.start.column, move.end.column);
-    short maxCol = min(move.start.column, move.end.column);
+    int col = min(move.start.column, move.end.column);
+    int maxCol = min(move.start.column, move.end.column);
 
     for (; col < maxCol; ++col) {
         if (board[move.start.row][col] != Pieces::none) {
@@ -195,8 +196,8 @@ bool GameBoard::validMove(Move& move) {
         break;
     case Pieces::whiteKnight:
     case Pieces::blackKnight: {
-        short rowDiff = abs(move.start.row - move.end.row);
-        short colDiff = abs(move.start.row - move.end.row);
+        int rowDiff = abs(move.start.row - move.end.row);
+        int colDiff = abs(move.start.row - move.end.row);
 
         if (rowDiff != 2 && colDiff != 2) {
             return false;
@@ -249,4 +250,6 @@ bool GameBoard::validMove(Move& move) {
     return kingInCheck(move);
 }
 
-void GameBoard::processMove(Move& move) {}
+void GameBoard::processMove(Move& move) {
+    cout << move.start.column;
+}
