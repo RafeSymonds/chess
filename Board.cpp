@@ -58,7 +58,7 @@ PieceTypes& Board::getPieceType(const Position& position) {
 
 
 bool Board::knightAttacks(const Position& position) const {
-    PieceTypes knightColor = getPieceType(position) > none ? whiteKnight : blackKnight;
+    PieceTypes knightColor = getPieceType(position) < none ? whiteKnight : blackKnight;
 
     for (const Position& pos : knightMoves) {
         Position newPos = position + pos;
@@ -71,8 +71,8 @@ bool Board::knightAttacks(const Position& position) const {
 
 bool Board::straightAttacks(const Position& position) const {
     PieceTypes target = getPieceType(position);
-    PieceTypes queenColor = target > none ? whiteQueen : blackQueen;
-    PieceTypes rookColor = target > none ? whiteRook : blackRook;
+    PieceTypes queenColor = target < none ? whiteQueen : blackQueen;
+    PieceTypes rookColor = target < none ? whiteRook : blackRook;
 
     for (const Position& direction : straightDirections) {
         for (int step = 1; step < boardSize; ++step) {
@@ -98,8 +98,8 @@ bool Board::straightAttacks(const Position& position) const {
 
 bool Board::diagonalAttacks(const Position& position) const {
     PieceTypes target = getPieceType(position);
-    PieceTypes queenColor = target > none ? whiteQueen : blackQueen;
-    PieceTypes bishopColor = target > none ? whiteBishop : blackBishop;
+    PieceTypes queenColor = target < none ? whiteQueen : blackQueen;
+    PieceTypes bishopColor = target < none ? whiteBishop : blackBishop;
 
     for (const Position& direction : diagonalDirections) {
         for (int step = 1; step < boardSize; ++step) {
@@ -127,12 +127,12 @@ bool Board::kingInCheck(const Position& position) const {
     return knightAttacks(position) || straightAttacks(position) || diagonalAttacks(position);
 }
 
-bool isValidMoveForPawn(const Move& move, PieceTypes pieceType) {
+bool Board::isValidMoveForPawn(const Move& move, PieceTypes pieceType) const {
     int direction = (pieceType == whitePawn) ? -1 : 1;
     if (move.end.column == move.start.column) {
         if (move.end.row == move.start.row + direction) return true;
-        if ((pieceType == whitePawn && move.start.row == 1 && move.end.row == move.start.row + 2)
-            || (pieceType == blackPawn && move.start.row == 6 && move.end.row == move.start.row - 2)) {
+        if ((pieceType == whitePawn && move.start.row == 6 && move.end.row == move.start.row - 2)
+            || (pieceType == blackPawn && move.start.row == 1 && move.end.row == move.start.row + 2)) {
             return true;
         }
     } else if (std::abs(move.end.column - move.start.column) == 1) {
@@ -141,25 +141,68 @@ bool isValidMoveForPawn(const Move& move, PieceTypes pieceType) {
     return false;
 }
 
-bool isValidMoveForKnight(const Move& move) {
+bool Board::isValidMoveForKnight(const Move& move) const {
     int rowDiff = std::abs(move.end.row - move.start.row);
     int colDiff = std::abs(move.end.column - move.start.column);
     return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
 }
 
-bool isValidMoveForRook(const Move& move) {
-    return (move.start.row == move.end.row || move.start.column == move.end.column);
+bool Board::isValidMoveForRook(const Move& move) const {
+    if (move.start.row != move.end.row && move.start.column != move.end.column) {
+        return false;
+    }
+
+    if (move.start.row == move.end.row) {
+        int startCol = min(move.start.column, move.end.column) + 1;
+        int endCol = max(move.start.column, move.end.column);
+
+        for (; startCol < endCol; ++startCol) {
+            if (getPieceType(move.start + Position(0, startCol)) != none) {
+                return false;
+            }
+        }
+
+    } else {
+        int startRow = min(move.start.row, move.end.row) + 1;
+        int endRow = max(move.start.row, move.end.row);
+
+        for (; startRow < endRow; ++startRow) {
+            if (getPieceType(move.start + Position(startRow, 0)) != none) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
-bool isValidMoveForBishop(const Move& move) {
-    return std::abs(move.end.row - move.start.row) == std::abs(move.end.column - move.start.column);
+bool Board::isValidMoveForBishop(const Move& move) const {
+    if (std::abs(move.start.row - move.end.row) != std::abs(move.start.column - move.end.column)) {
+        return false;
+    }
+
+    int rowDirection = (move.end.row > move.start.row) ? 1 : -1;
+    int colDirection = (move.end.column > move.start.column) ? 1 : -1;
+
+    int row = move.start.row + rowDirection;
+    int col = move.start.column + colDirection;
+
+    while (row != move.end.row && col != move.end.column) {
+        if (getPieceType(Position(row, col)) != none) {
+            return false;
+        }
+        row += rowDirection;
+        col += colDirection;
+    }
+
+    return true;
 }
 
-bool isValidMoveForQueen(const Move& move) {
+bool Board::isValidMoveForQueen(const Move& move) const {
     return isValidMoveForRook(move) || isValidMoveForBishop(move);
 }
 
-bool isValidMoveForKing(const Move& move) {
+bool Board::isValidMoveForKing(const Move& move) const {
     int rowDiff = std::abs(move.end.row - move.start.row);
     int colDiff = std::abs(move.end.column - move.start.column);
     return (rowDiff <= 1 && colDiff <= 1);

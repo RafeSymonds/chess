@@ -25,8 +25,8 @@ private:
     Position whiteKingPosition;
     Position blackKingPosition;
 
-    PieceTypes getPieceType(const Position& position) const;
-    PieceTypes& getPieceType(const Position& position);
+    inline PieceTypes getPieceType(const Position& position) const;
+    inline PieceTypes& getPieceType(const Position& position);
 
     bool knightAttacks(const Position& position) const;
     bool straightAttacks(const Position& position) const;
@@ -34,6 +34,13 @@ private:
 
     bool kingInCheck(const Position& position) const;
 
+    bool isValidMoveForPawn(const Move& move, PieceTypes pieceType) const;
+    bool isValidMoveForKnight(const Move& move) const;
+    bool isValidMoveForRook(const Move& move) const;
+
+    bool isValidMoveForBishop(const Move& move) const;
+    bool isValidMoveForQueen(const Move& move) const;
+    bool isValidMoveForKing(const Move& move) const;
 
 public:
     Board()
