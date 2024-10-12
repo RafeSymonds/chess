@@ -16,6 +16,7 @@ private:
     bool whiteLong = true;
     bool blackShort = true;
     bool blackLong = true;
+
     bool whiteTurn = true;
 
     std::vector<Move> generateMoves() const;
@@ -55,6 +56,8 @@ public:
     void displayBoard() const;
 
     bool gameIsOver() const;
+
+    std::pair<Move, bool> processUserInput(const std::string& userInput) const;
 };
 
 #endif

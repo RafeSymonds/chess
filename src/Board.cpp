@@ -209,10 +209,15 @@ bool Board::isValidMoveForKing(const Move& move) const {
 }
 
 bool Board::validMoveNoCheck(const Move& move) const {
-    if (move.start == move.end || sameSide(getPieceType(move.end), getPieceType(move.start))) {
+    PieceTypes piece = getPieceType(move.start);
+
+    if ((piece > none && !whiteTurn) || (piece < none && whiteTurn)) {
         return false;
     }
-    PieceTypes piece = getPieceType(move.start);
+
+    if (move.start == move.end || sameSide(piece, getPieceType(move.end))) {
+        return false;
+    }
 
     switch (piece) {
     case whitePawn:
@@ -250,10 +255,22 @@ bool Board::validMoveWithCheck(const Move& move) {
     endPlace = startPlace;
     startPlace = none;
 
+    if (endPlace == whiteKing) {
+        whiteKingPosition = move.end;
+    } else if (endPlace == blackKing) {
+        blackKingPosition = move.end;
+    }
+
     bool valid = endPlace > none ? !kingInCheck(whiteKingPosition) : !kingInCheck(blackKingPosition);
 
     startPlace = endPlace;
     endPlace = targetPiece;
+
+    if (endPlace == whiteKing) {
+        whiteKingPosition = move.start;
+    } else if (endPlace == blackKing) {
+        blackKingPosition = move.start;
+    }
 
     return valid;
 }
@@ -264,6 +281,14 @@ void Board::processMove(const Move& move) {
 
     endPlace = startPlace;
     startPlace = none;
+
+    if (endPlace == whiteKing) {
+        whiteKingPosition = move.end;
+    } else if (endPlace == blackKing) {
+        blackKingPosition = move.end;
+    }
+
+    whiteTurn = !whiteTurn;
 }
 
 bool Board::gameIsOver() const {
@@ -291,4 +316,39 @@ void Board::displayBoard() const {
     cout << "\n";
 
     cout << flush;
+}
+
+pair<Move, bool> Board::processUserInput(const string& userInput) const {
+    size_t numChars = userInput.size();
+
+    int rowEnd = userInput[numChars - 1] - '0' - 1;
+    int columnEnd = userInput[numChars - 1] - 'a';
+
+    if (userInput[0] >= 'a' && userInput[0] <= 'h') {
+        // pawn move
+        int directionFrom = whiteTurn ? 1 : -1;
+
+        if (numChars == 2) {
+            if (getPieceType(Position(rowEnd + directionFrom, columnEnd)) == none) {
+                directionFrom *= 2;
+            }
+
+            return { Move(rowEnd + directionFrom, columnEnd, rowEnd, columnEnd), true };
+        }
+
+        int columnStart = userInput[0] - 'a';
+        return { Move(rowEnd + directionFrom, columnStart, rowEnd, columnEnd), true };
+    }
+    if (userInput[0] == 'K') {
+        // knight
+    }
+
+    getPieceTypeFromChar(userInput[0]);
+
+
+    if (!validPosition(rowEnd, columnEnd)) {
+        return { {}, false };
+    }
+
+    return { Move(), true };
 }
