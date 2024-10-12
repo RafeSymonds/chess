@@ -1,0 +1,9 @@
+# Ignore build directory
+build/
+
+# Ignore object files (if any)
+*.o
+
+# Ignore executables
+main
+main_debug
