@@ -43,6 +43,9 @@ public:
     bool validMoveNoCheck(const Move& move) const;
     bool validMoveWithCheck(const Move& move);
 
+    void processMove(const Move& move);
+
+    void displayBoard() const;
 
     bool gameIsOver() const;
 };

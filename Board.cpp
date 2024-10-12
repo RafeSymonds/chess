@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <new>
 
 #include "Constants.hpp"
 #include "Position.hpp"
@@ -23,46 +24,15 @@ Board::Board(const string& fen) {
         cout << line << endl;
 
         for (char c : line) {
-            switch (c) {
-            case 'p':
-                board[row][column] = PieceTypes::whitePawn;
-                break;
-            case 'P':
-                board[row][column] = PieceTypes::blackPawn;
-                break;
-            case 'n':
-                board[row][column] = PieceTypes::whiteKnight;
-                break;
-            case 'N':
-                board[row][column] = PieceTypes::blackKnight;
-                break;
-            case 'b':
-                board[row][column] = PieceTypes::whiteBishop;
-                break;
-            case 'B':
-                board[row][column] = PieceTypes::blackBishop;
-                break;
-            case 'r':
-                board[row][column] = PieceTypes::whiteRook;
-                break;
-            case 'R':
-                board[row][column] = PieceTypes::blackRook;
-                break;
-            case 'q':
-                board[row][column] = PieceTypes::whiteQueen;
-                break;
-            case 'Q':
-                board[row][column] = PieceTypes::blackQueen;
-                break;
-            case 'k':
-                board[row][column] = PieceTypes::whiteKing;
+            PieceTypes piece = getPieceTypeFromChar(c);
+
+            board[row][column] = piece;
+
+            if (piece == PieceTypes::whiteKing) {
                 whiteKingPosition = { row, column };
-                break;
-            case 'K':
-                board[row][column] = PieceTypes::blackKing;
+            } else if (piece == PieceTypes::blackKing) {
                 blackKingPosition = { row, column };
-                break;
-            default:
+            } else if (piece == PieceTypes::none) {
                 int val = c - '0';
                 column += val;
             }
@@ -158,7 +128,7 @@ bool Board::kingInCheck(const Position& position) const {
 }
 
 bool isValidMoveForPawn(const Move& move, PieceTypes pieceType) {
-    int direction = (pieceType == whitePawn) ? 1 : -1;
+    int direction = (pieceType == whitePawn) ? -1 : 1;
     if (move.end.column == move.start.column) {
         if (move.end.row == move.start.row + direction) return true;
         if ((pieceType == whitePawn && move.start.row == 1 && move.end.row == move.start.row + 2)
@@ -245,6 +215,37 @@ bool Board::validMoveWithCheck(const Move& move) {
     return valid;
 }
 
+void Board::processMove(const Move& move) {
+    PieceTypes& startPlace = getPieceType(move.start);
+    PieceTypes& endPlace = getPieceType(move.end);
+
+    endPlace = startPlace;
+    startPlace = none;
+}
+
 bool Board::gameIsOver() const {
     return gameOver;
+}
+
+void Board::displayBoard() const {
+    int rowNum = 1;
+    for (const auto& row : board) {
+        cout << rowNum << " ";
+        for (const auto& piece : row) {
+            cout << getCharFromPieceType(piece) << " ";
+        }
+        rowNum += 1;
+        cout << "\n";
+    }
+    char column = 'a';
+
+
+    cout << "  ";
+
+    for (int i = 0; i < boardSize; ++i) {
+        cout << char(column + i) << " ";
+    }
+    cout << "\n";
+
+    cout << flush;
 }
