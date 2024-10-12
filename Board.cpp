@@ -157,7 +157,7 @@ bool Board::isValidMoveForRook(const Move& move) const {
         int endCol = max(move.start.column, move.end.column);
 
         for (; startCol < endCol; ++startCol) {
-            if (getPieceType(move.start + Position(0, startCol)) != none) {
+            if (getPieceType(Position(move.start.row, startCol)) != none) {
                 return false;
             }
         }
@@ -167,7 +167,7 @@ bool Board::isValidMoveForRook(const Move& move) const {
         int endRow = max(move.start.row, move.end.row);
 
         for (; startRow < endRow; ++startRow) {
-            if (getPieceType(move.start + Position(startRow, 0)) != none) {
+            if (getPieceType(Position(startRow, move.start.column)) != none) {
                 return false;
             }
         }
