@@ -29,18 +29,18 @@ all: debug
 
 # Debug target (no object files)
 debug: CXXFLAGS += -g3 -DDEBUG -fsanitize=address -fsanitize=undefined
-debug: $(EXECUTABLE)_debug
+debug: $(BUILD_DIR)/$(EXECUTABLE)_debug
 
-$(EXECUTABLE)_debug: $(SOURCES)
+$(BUILD_DIR)/$(EXECUTABLE)_debug: $(SOURCES)
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
 
 .PHONY: debug
 
 # Release target
 release: CXXFLAGS += -O3 -DNDEBUG
-release: $(EXECUTABLE)
+release: $(BUILD_DIR)/$(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+$(BUILD_DIR)/$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@
 
 # Rule for creating objects
@@ -52,5 +52,5 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 # Clean target
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(EXECUTABLE) $(EXECUTABLE)_debug
+	rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/$(EXECUTABLE) $(BUILD_DIR)/$(EXECUTABLE)_debug
 	rm -rf $(BUILD_DIR)  # Remove entire build directory
