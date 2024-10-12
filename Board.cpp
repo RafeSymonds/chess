@@ -1,5 +1,6 @@
 #include "Board.hpp"
 
+#include <cstddef>
 #include <iostream>
 
 #include "Constants.hpp"
@@ -12,8 +13,9 @@ Board::Board(const string& fen) {
     size_t pos = 0;
     int row = 0;
 
-    while (lastPos != string::npos) {
-        pos = fen.find('/', pos);
+    while (pos != string::npos) {
+        pos = fen.find('/', lastPos);
+
         string line = fen.substr(lastPos, pos - lastPos);
 
         int column = 0;
@@ -66,10 +68,14 @@ Board::Board(const string& fen) {
             }
             ++column;
         }
+        if (pos == string::npos) {
+            return;
+        }
         ++row;
         column = 0;
-        pos += pos - lastPos;
-        lastPos = pos;
+        size_t diff = pos - lastPos;
+        lastPos = pos + 1;
+        pos += diff;
     }
 }
 
@@ -190,6 +196,9 @@ bool isValidMoveForKing(const Move& move) {
 }
 
 bool Board::validMoveNoCheck(const Move& move) const {
+    if (move.start == move.end || sameSide(getPieceType(move.end), getPieceType(move.start))) {
+        return false;
+    }
     PieceTypes piece = getPieceType(move.start);
 
     switch (piece) {
@@ -228,7 +237,7 @@ bool Board::validMoveWithCheck(const Move& move) {
     endPlace = startPlace;
     startPlace = none;
 
-    bool valid = endPlace > none ? kingInCheck(whiteKingPosition) : kingInCheck(blackKingPosition);
+    bool valid = endPlace > none ? !kingInCheck(whiteKingPosition) : !kingInCheck(blackKingPosition);
 
     startPlace = endPlace;
     endPlace = targetPiece;

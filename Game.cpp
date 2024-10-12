@@ -28,15 +28,12 @@ pair<Move, bool> Game::processUserInput(string& userInput) {
         return { {}, false };
     }
 
-    auto rowStart = static_cast<short>(userInput[1] - 1);
-    auto columnStart = static_cast<short>(userInput[0] - 'A');
-    auto rowEnd = static_cast<short>(userInput[3] - 1);
-    auto columnEnd = static_cast<short>(userInput[2] - 'A');
+    auto rowStart = static_cast<short>(userInput[1] - '0' - 1);
+    auto columnStart = static_cast<short>(userInput[0] - 'a');
+    auto rowEnd = static_cast<short>(userInput[3] - '0' - 1);
+    auto columnEnd = static_cast<short>(userInput[2] - 'a');
 
-    if (validPosition(rowStart, columnStart)) {
-        return { {}, false };
-    }
-    if (validPosition(rowEnd, columnEnd)) {
+    if (!validPosition(rowStart, columnStart) || !validPosition(rowEnd, columnEnd)) {
         return { {}, false };
     }
 
