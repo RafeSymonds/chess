@@ -1,11 +1,11 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "GameBoard.h"
+#include "Board.hpp"
 
 class Game {
 private:
-    GameBoard currentBoard;
+    Board currentBoard;
 
 public:
     void runGame();

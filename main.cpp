@@ -1,10 +1,5 @@
-#include "Game.h"
-
-using namespace std;
-
+#include "Game.hpp"
 int main() {
     Game game;
-
-
     game.runGame();
 }

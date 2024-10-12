@@ -325,9 +325,9 @@ help:
 #
 # ADD YOUR OWN DEPENDENCIES HERE
 
-Game.o: Game.cpp Game.h GameBoard.h Constants.h Move.h Position.h
-GameBoard.o: GameBoard.cpp GameBoard.h Constants.h Move.h Position.h
-main.o: main.cpp Game.h GameBoard.h Constants.h Move.h Position.h
+Board.o: Board.cpp Board.hpp Constants.hpp Move.hpp Position.hpp
+Game.o: Game.cpp Game.hpp Board.hpp Constants.hpp Move.hpp Position.hpp
+main.o: main.cpp Game.hpp Board.hpp Constants.hpp Move.hpp Position.hpp
 
 ######################
 # TODO (end) #

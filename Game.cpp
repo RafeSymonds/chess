@@ -1,8 +1,9 @@
-#include "Game.h"
+#include "Game.hpp"
 
 #include <iostream>
 
-#include "GameBoard.h"
+#include "Position.hpp"
+
 
 using namespace std;
 
@@ -13,16 +14,11 @@ void Game::runGame() {
         cin >> userInput;
 
         auto [move, status] = processUserInput(userInput);
-        if (!status) {
-            continue;
-        }
 
-        if (not currentBoard.validMove(move)) {
+        if (!status || !currentBoard.validMoveWithCheck(move)) {
             cout << "Please provide a valid move" << endl;
             continue;
         }
-
-        currentBoard.processMove(move);
     }
 }
 
@@ -37,10 +33,10 @@ pair<Move, bool> Game::processUserInput(string& userInput) {
     auto rowEnd = static_cast<short>(userInput[3] - 1);
     auto columnEnd = static_cast<short>(userInput[2] - 'A');
 
-    if (GameBoard::validPosition(rowStart, columnStart)) {
+    if (validPosition(rowStart, columnStart)) {
         return { {}, false };
     }
-    if (GameBoard::validPosition(rowEnd, columnEnd)) {
+    if (validPosition(rowEnd, columnEnd)) {
         return { {}, false };
     }
 
