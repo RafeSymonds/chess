@@ -41,6 +41,7 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
     // cout << "Depth " << depth << "\n";
 
     if (depth == 0) {
+        board.unProcessMove(move, pieceRemoved);
         return { 0, 0 };
     }
 
@@ -69,7 +70,7 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
 
         for (const Move& newMove : moves) {
             auto result = alphaBetaPruning(newMove, depth - 1, alpha, beta);
-            value = max(value, result.first);
+            value = min(value, result.first);
 
             if (value < alpha) {
                 break;

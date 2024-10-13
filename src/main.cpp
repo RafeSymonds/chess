@@ -2,6 +2,6 @@
 #include "Game.hpp"
 
 int main() {
-    Game game(1, defaultBoardPosition, 5);
+    Game game(8, defaultBoardPosition, 4);
     game.runGame();
 }

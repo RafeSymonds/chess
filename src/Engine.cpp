@@ -59,6 +59,7 @@ Move Engine::findBestMove() {
 
     evaluation.resize(moves.size());
 
+    activeThreads = threads.size();
 
     condition.notify_all();
 
@@ -81,6 +82,7 @@ Move Engine::findBestMove() {
 }
 
 void Engine::workerTask(size_t index) {
+    size_t threadTotal = 0;
     while (true) {
         Move move {};
         size_t moveIndex = -1;
@@ -91,8 +93,6 @@ void Engine::workerTask(size_t index) {
             if (stop) {
                 return;
             }
-
-            ++activeThreads;
 
             move = moves.back();
             moves.pop_back();
@@ -105,10 +105,15 @@ void Engine::workerTask(size_t index) {
         {
             std::unique_lock<std::mutex> lock(moveMutex);
             evaluation[moveIndex] = eval;
-            totalPositionsEvaluated += positionEvaluated;
+            threadTotal += positionEvaluated;
 
-            if (--activeThreads == 0 && moves.empty()) {
-                doneCondition.notify_all();
+            if (moves.empty()) {
+                cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
+                totalPositionsEvaluated += threadTotal;
+                threadTotal += 0;
+                if (--activeThreads == 0) {
+                    doneCondition.notify_all();
+                }
             }
         }
     }
