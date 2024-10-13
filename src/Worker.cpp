@@ -42,13 +42,13 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
     if (depth == 0) {
         double eval = board.evaluation();
         board.unProcessMove(move, pieceRemoved);
-        return { eval, 0 };
+        return { eval, 1 };
     }
 
     double value = 0;
     vector<Move> moves = board.getAllPossibleMoves();
 
-    size_t totalPositionsEvaluated = moves.size();
+    size_t totalPositionsEvaluated = 0;
 
     if (board.isWhiteTurn()) {
         value = -numeric_limits<double>::max();

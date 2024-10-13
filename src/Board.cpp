@@ -337,13 +337,13 @@ bool Board::isWhiteTurn() const {
 }
 
 void Board::displayBoard() const {
-    int rowNum = 1;
+    int rowNum = 8;
     for (const auto& row : board) {
         cout << rowNum << " ";
         for (const auto& piece : row) {
             cout << getCharFromPieceType(piece) << " ";
         }
-        rowNum += 1;
+        rowNum -= 1;
         cout << "\n";
     }
     char column = 'a';
@@ -362,7 +362,7 @@ void Board::displayBoard() const {
 pair<Move, bool> Board::processUserInput(const string& userInput) const {
     size_t numChars = userInput.size();
 
-    int rowEnd = userInput[numChars - 1] - '1';
+    int rowEnd = 8 - (userInput[numChars - 1] - '0');
     int colEnd = userInput[numChars - 2] - 'a';
 
     if (userInput[0] >= 'a' && userInput[0] <= 'h') {
@@ -390,7 +390,7 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
             continue;
         }
         if (isdigit(userInput[i]) != 0) {
-            rowStart = userInput[i] - '1';
+            rowStart = 8 - (userInput[i] - '0');
         } else {
             colStart = userInput[i] - 'a';
         }
