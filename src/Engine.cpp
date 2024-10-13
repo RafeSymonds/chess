@@ -137,9 +137,9 @@ void Engine::workerTask(size_t index) {
             evaluation[moveIndex] = workerResult.eval;
 
             if (board.isWhiteTurn()) {
-                // alpha = max(alpha, workerResult.alpha);
+                alpha = max(alpha, workerResult.alpha);
             } else {
-                // beta = min(beta, workerResult.beta);
+                beta = min(beta, workerResult.beta);
             }
 
             threadTotal += workerResult.positionsEvaluated;
