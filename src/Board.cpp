@@ -287,6 +287,12 @@ bool Board::validMoveWithCheck(const Move& move) {
     startPlace = endPlace;
     endPlace = targetPiece;
 
+    if (startPlace == whiteKing) {
+        whiteKingPosition = move.start;
+    } else if (startPlace == blackKing) {
+        blackKingPosition = move.start;
+    }
+
 
     return valid;
 }
@@ -368,6 +374,11 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
     if (userInput[0] >= 'a' && userInput[0] <= 'h') {
         // pawn move
         int directionFrom = whiteTurn ? 1 : -1;
+
+        if ((rowEnd >= 6 && whiteTurn) || (rowEnd <= 1 && !whiteTurn)) {
+            return { {}, false };
+        }
+
 
         if (numChars == 2) {
             if (getPieceType(Position(rowEnd + directionFrom, colEnd)) == none) {
@@ -474,6 +485,24 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
                 }
 
                 break;
+            }
+        }
+    }
+    if (userInput[0] == 'K') {
+        for (const Position& pos : kingMoves) {
+            Position newPos = endPosition + pos;
+            if (!validPosition(newPos)) {
+                continue;
+            }
+
+            if ((rowStart != -1 && newPos.row != rowStart) && (colStart != -1 && newPos.column != colStart)) {
+                continue;
+            }
+
+            PieceTypes piece = getPieceType(newPos);
+
+            if ((whiteTurn && piece == whiteKing) || (!whiteTurn && piece == blackKing)) {
+                return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
             }
         }
     }
@@ -691,7 +720,7 @@ double Board::evaluation() const {
 
     for (int r = 0; r < boardSize; ++r) {
         for (int c = 0; c < boardSize; ++c) {
-            eval += getValueFromPieceType(board[r][c]);
+            eval += getValueFromPieceType(board[r][c], r, c);
         }
     }
     return eval;
