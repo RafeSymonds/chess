@@ -16,7 +16,8 @@ Engine::Engine()
     , threads(1)
     , moves(0)
     , stop(false)
-    , depth(1) {
+    , depth(1)
+    , totalPositionsEvaluated(0) {
     generateWorkers();
 }
 
@@ -25,7 +26,8 @@ Engine::Engine(int threadNum, const Board& board, int depth)
     , workers(threadNum, Worker(board))
     , threads(threadNum)
     , stop(false)
-    , depth(depth) {
+    , depth(depth)
+    , totalPositionsEvaluated(0) {
     generateWorkers();
 }
 
@@ -49,6 +51,8 @@ void Engine::generateWorkers() {
 }
 
 Move Engine::findBestMove() {
+    totalPositionsEvaluated = 0;
+
     moves = board.getAllPossibleMoves();
 
     cout << "Moves len = " << moves.size() << endl;
@@ -71,6 +75,8 @@ Move Engine::findBestMove() {
 
     auto it = min(evaluation.begin(), evaluation.end());
 
+    cout << "Total positions evaluated = " << totalPositionsEvaluated << "\n";
+
     return moves[distance(evaluation.begin(), it)];
 }
 
@@ -86,18 +92,23 @@ void Engine::workerTask(size_t index) {
                 return;
             }
 
+            ++activeThreads;
+
             move = moves.back();
             moves.pop_back();
             moveIndex = moves.size();
         }
-        double eval = workers[index].generateBestMove(depth, move);
+        auto [eval, positionEvaluated] = workers[index].generateBestMove(depth, move);
+
+        // cout << "New positionEvaluated=" << positionEvaluated << endl;
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
             evaluation[moveIndex] = eval;
+            totalPositionsEvaluated += positionEvaluated;
 
-            if (moves.empty()) {
-                doneCondition.notify_one();
+            if (--activeThreads == 0 && moves.empty()) {
+                doneCondition.notify_all();
             }
         }
     }
@@ -106,6 +117,6 @@ void Engine::workerTask(size_t index) {
 void Engine::processMove(const Move& move) {
     board.processMove(move);
     for (Worker& worker : workers) {
-        worker.processMove(move);
+        worker.setBoard(board);
     }
 }

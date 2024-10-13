@@ -1,5 +1,7 @@
 
+#include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -24,10 +26,13 @@ private:
     std::condition_variable condition;
     std::condition_variable doneCondition;
 
+    std::atomic<size_t> activeThreads { 0 };
+
     bool stop;
 
     int depth;
 
+    std::atomic<size_t> totalPositionsEvaluated;
 
 public:
     Engine();

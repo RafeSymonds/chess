@@ -58,6 +58,20 @@ PieceTypes& Board::getPieceType(const Position& position) {
     return board[position.row][position.column];
 }
 
+bool Board::pawnAttacks(const Position& position) const {
+    PieceTypes pawnColor = getPieceType(position) < none ? whitePawn : blackPawn;
+
+    int direction = pawnColor == whitePawn ? 1 : -1;
+
+    for (int dc = -1; dc < 2; dc += 2) {
+        Position newPos = position + Position(direction, dc);
+        if (validPosition(newPos) && getPieceType(newPos) == pawnColor) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 bool Board::knightAttacks(const Position& position) const {
     PieceTypes knightColor = getPieceType(position) < none ? whiteKnight : blackKnight;
@@ -126,7 +140,7 @@ bool Board::diagonalAttacks(const Position& position) const {
 }
 
 bool Board::kingInCheck(const Position& position) const {
-    return knightAttacks(position) || straightAttacks(position) || diagonalAttacks(position);
+    return pawnAttacks(position) || knightAttacks(position) || straightAttacks(position) || diagonalAttacks(position);
 }
 
 bool Board::isValidMoveForPawn(const Move& move, PieceTypes pieceType) const {
@@ -273,11 +287,6 @@ bool Board::validMoveWithCheck(const Move& move) {
     startPlace = endPlace;
     endPlace = targetPiece;
 
-    if (endPlace == whiteKing) {
-        whiteKingPosition = move.start;
-    } else if (endPlace == blackKing) {
-        blackKingPosition = move.start;
-    }
 
     return valid;
 }
@@ -305,6 +314,13 @@ PieceTypes Board::processMove(const Move& move) {
 void Board::unProcessMove(const Move& move, PieceTypes pieceRemoved) {
     PieceTypes& startPlace = getPieceType(move.start);
     PieceTypes& endPlace = getPieceType(move.end);
+
+    if (endPlace == whiteKing) {
+        whiteKingPosition = move.start;
+    } else if (endPlace == blackKing) {
+        blackKingPosition = move.start;
+    }
+
 
     startPlace = endPlace;
     endPlace = pieceRemoved;

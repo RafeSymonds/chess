@@ -29,6 +29,7 @@ private:
     inline PieceTypes getPieceType(const Position& position) const;
     inline PieceTypes& getPieceType(const Position& position);
 
+    bool pawnAttacks(const Position& position) const;
     bool knightAttacks(const Position& position) const;
     bool straightAttacks(const Position& position) const;
     bool diagonalAttacks(const Position& position) const;

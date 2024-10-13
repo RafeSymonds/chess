@@ -1,6 +1,6 @@
 #include "Worker.hpp"
 
-#include <iostream>
+#include <cstddef>
 #include <limits>
 
 #include "Constants.hpp"
@@ -9,26 +9,54 @@
 
 using namespace std;
 
-double Worker::generateBestMove(int depth, const Move& move) {
-    return alphaBetaPruning(move, depth - 1, numeric_limits<double>::min(), numeric_limits<double>::max());
+
+pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
+    PieceTypes pieceRemoved = board.processMove(move);
+    vector<Move> moves = board.getAllPossibleMoves();
+
+
+    size_t totalPositions = 0;
+
+    bool whiteTurn = board.isWhiteTurn();
+    double best = whiteTurn ? -numeric_limits<double>::max() : numeric_limits<double>::max();
+
+    for (const Move& newMove : moves) {
+        auto result
+          = alphaBetaPruning(newMove, depth - 1, -numeric_limits<double>::max(), numeric_limits<double>::max());
+        totalPositions += result.second;
+        if (whiteTurn) {
+            best = max(best, result.first);
+        } else {
+            best = min(best, result.first);
+        }
+    }
+
+    board.unProcessMove(move, pieceRemoved);
+    return { best, totalPositions };
 }
 
-double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
+pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
     PieceTypes pieceRemoved = board.processMove(move);
 
+    // cout << "Depth " << depth << "\n";
 
     if (depth == 0) {
-        return 5;
+        return { 0, 0 };
     }
 
     double value = 0;
     vector<Move> moves = board.getAllPossibleMoves();
 
-    if (board.isWhiteTurn()) {
-        value = numeric_limits<double>::min();
 
-        for (const Move& move : moves) {
-            value = max(value, alphaBetaPruning(move, depth - 1, alpha, beta));
+    pair<double, size_t> result = { 0, 0 };
+
+    if (board.isWhiteTurn()) {
+        value = -numeric_limits<double>::max();
+
+        for (const Move& newMove : moves) {
+            auto result = alphaBetaPruning(newMove, depth - 1, alpha, beta);
+
+            value = max(value, result.first);
 
             if (value > beta) {
                 break;
@@ -39,10 +67,11 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
     } else {
         value = numeric_limits<double>::max();
 
-        for (const Move& move : moves) {
-            value = max(value, alphaBetaPruning(move, depth - 1, alpha, beta));
+        for (const Move& newMove : moves) {
+            auto result = alphaBetaPruning(newMove, depth - 1, alpha, beta);
+            value = max(value, result.first);
 
-            if (value < beta) {
+            if (value < alpha) {
                 break;
             }
 
@@ -51,9 +80,13 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
     }
 
     board.unProcessMove(move, pieceRemoved);
-    return value;
+    return { value, moves.size() + result.second };
 }
 
 void Worker::processMove(const Move& move) {
     board.processMove(move);
+}
+
+void Worker::setBoard(const Board& newBoard) {
+    board = newBoard;
 }

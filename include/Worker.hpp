@@ -1,4 +1,6 @@
 #include <climits>
+#include <cstddef>
+#include <utility>
 
 #include "Board.hpp"
 #include "Move.hpp"
@@ -16,7 +18,9 @@ public:
         , alpha(INT_MIN)
         , beta(INT_MAX) {}
 
-    double generateBestMove(int depth, const Move& move);
+    std::pair<double, size_t> generateBestMove(int depth, const Move& move);
     void processMove(const Move& move);
-    double alphaBetaPruning(const Move& move, int depth, double alpha, double beta);
+    std::pair<double, size_t> alphaBetaPruning(const Move& move, int depth, double alpha, double beta);
+
+    void setBoard(const Board& newBoard);
 };
