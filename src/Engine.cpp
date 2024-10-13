@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <iterator>
 #include <thread>
@@ -46,12 +47,16 @@ Board& Engine::getBoard() {
 }
 
 void Engine::generateWorkers() {
+    locale loc("");
+    cout.imbue(loc);
     for (size_t i = 0; i < threads.size(); ++i) {
         threads[i] = thread(&Engine::workerTask, this, i);
     }
 }
 
 Move Engine::findBestMove() {
+    auto startTime = chrono::system_clock::now();
+
     moves = board.getAllPossibleMoves();
     vector<Move> savedMoves = moves;
 
@@ -69,7 +74,7 @@ Move Engine::findBestMove() {
 
     {
         std::unique_lock<std::mutex> lock(moveMutex);
-        doneCondition.wait(lock, [this] { return moves.empty() || activeThreads == 0; });
+        doneCondition.wait(lock, [this] { return moves.empty() && activeThreads == 0; });
     }
 
     auto it = evaluation.begin();
@@ -80,15 +85,17 @@ Move Engine::findBestMove() {
         it = min_element(evaluation.begin(), evaluation.end());
     }
 
-    for (auto eval : evaluation) {
-        cout << eval << " ";
-    }
-    cout << endl;
+    auto endTime = chrono::system_clock::now();
 
+    auto duration = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
 
-    cout << "Total positions evaluated = " << totalPositionsEvaluated << "\n";
+    long long totalMicroseconds = duration.count();
+    long long seconds = totalMicroseconds / 1000000;
+    long long microseconds = totalMicroseconds % 1000000;
 
-    cout << distance(evaluation.begin(), it) << endl;
+    cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << microseconds
+         << "\n";
+
 
     return savedMoves[distance(evaluation.begin(), it)];
 }

@@ -100,6 +100,10 @@ bool Board::straightAttacks(const Position& position) const {
 
             PieceTypes piece = getPieceType(newPos);
 
+            if (piece == none) {
+                continue;
+            }
+
             if (sameSide(target, piece)) {
                 break;
             }
@@ -107,6 +111,7 @@ bool Board::straightAttacks(const Position& position) const {
             if (piece == queenColor || piece == rookColor) {
                 return true;
             }
+            return false;
         }
     }
     return false;
@@ -127,6 +132,10 @@ bool Board::diagonalAttacks(const Position& position) const {
 
             PieceTypes piece = getPieceType(newPos);
 
+            if (piece == none) {
+                continue;
+            }
+
             if (sameSide(target, piece)) {
                 break;
             }
@@ -134,6 +143,7 @@ bool Board::diagonalAttacks(const Position& position) const {
             if (piece == queenColor || piece == bishopColor) {
                 return true;
             }
+            return false;
         }
     }
     return false;

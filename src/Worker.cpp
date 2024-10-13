@@ -15,6 +15,12 @@ pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
     vector<Move> moves = board.getAllPossibleMoves();
 
 
+    if (moves.size() == 0) {
+        board.unProcessMove(move, pieceRemoved);
+        return { board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max(), 1 };
+    }
+
+
     size_t totalPositions = moves.size();
 
     bool whiteTurn = board.isWhiteTurn();
@@ -39,7 +45,7 @@ pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
 pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
     PieceTypes pieceRemoved = board.processMove(move);
 
-    if (depth == 0) {
+    if (depth <= 0 && pieceRemoved == none) {
         double eval = board.evaluation();
         board.unProcessMove(move, pieceRemoved);
         return { eval, 1 };
@@ -47,6 +53,11 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
 
     double value = 0;
     vector<Move> moves = board.getAllPossibleMoves();
+
+    if (moves.size() == 0) {
+        board.unProcessMove(move, pieceRemoved);
+        return { board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max(), 1 };
+    }
 
     size_t totalPositionsEvaluated = 0;
 
@@ -60,7 +71,7 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
 
             value = max(value, result.first);
 
-            if (value > beta) {
+            if (value >= beta) {
                 break;
             }
 
@@ -76,7 +87,7 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
 
             value = min(value, result.first);
 
-            if (value < alpha) {
+            if (value <= alpha) {
                 break;
             }
 
