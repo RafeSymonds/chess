@@ -81,6 +81,38 @@ inline char getCharFromPieceType(PieceTypes piece) {
     }
 }
 
+inline int getValueFromPieceType(PieceTypes piece) {
+    switch (piece) {
+    case whitePawn:
+        return 1;
+    case blackPawn:
+        return -1;
+    case whiteKnight:
+        return 3;
+    case blackKnight:
+        return -3;
+    case whiteBishop:
+        return 3;
+    case blackBishop:
+        return -3;
+    case whiteRook:
+        return 5;
+    case blackRook:
+        return -5;
+    case whiteQueen:
+        return 9;
+    case blackQueen:
+        return -9;
+    case whiteKing:
+        return 200;
+    case blackKing:
+        return -200;
+    case none:
+    default:
+        return 0;
+    }
+}
+
 constexpr int boardSize = 8;
 const std::string defaultBoardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 

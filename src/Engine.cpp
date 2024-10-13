@@ -7,6 +7,7 @@
 
 #include "Board.hpp"
 #include "Constants.hpp"
+#include "Move.hpp"
 
 
 using namespace std;
@@ -51,34 +52,45 @@ void Engine::generateWorkers() {
 }
 
 Move Engine::findBestMove() {
-    totalPositionsEvaluated = 0;
-
     moves = board.getAllPossibleMoves();
+    vector<Move> savedMoves = moves;
+
+    totalPositionsEvaluated = moves.size();
 
     cout << "Moves len = " << moves.size() << endl;
 
     evaluation.resize(moves.size());
 
-    activeThreads = threads.size();
+    activeThreads = min(threads.size(), moves.size());
+
+    cout << "Active threads " << activeThreads << endl;
 
     condition.notify_all();
 
     {
         std::unique_lock<std::mutex> lock(moveMutex);
-        doneCondition.wait(lock, [this] { return moves.empty(); });
+        doneCondition.wait(lock, [this] { return moves.empty() || activeThreads == 0; });
     }
+
+    auto it = evaluation.begin();
 
     if (board.isWhiteTurn()) {
-        auto it = max_element(evaluation.begin(), evaluation.end());
-
-        return moves[distance(evaluation.begin(), it)];
+        it = max_element(evaluation.begin(), evaluation.end());
+    } else {
+        it = min_element(evaluation.begin(), evaluation.end());
     }
 
-    auto it = min(evaluation.begin(), evaluation.end());
+    for (auto eval : evaluation) {
+        cout << eval << " ";
+    }
+    cout << endl;
+
 
     cout << "Total positions evaluated = " << totalPositionsEvaluated << "\n";
 
-    return moves[distance(evaluation.begin(), it)];
+    cout << distance(evaluation.begin(), it) << endl;
+
+    return savedMoves[distance(evaluation.begin(), it)];
 }
 
 void Engine::workerTask(size_t index) {
@@ -94,23 +106,28 @@ void Engine::workerTask(size_t index) {
                 return;
             }
 
+            if (moves.empty()) {
+                continue;
+            }
+
             move = moves.back();
             moves.pop_back();
             moveIndex = moves.size();
         }
         auto [eval, positionEvaluated] = workers[index].generateBestMove(depth, move);
 
-        // cout << "New positionEvaluated=" << positionEvaluated << endl;
+        cout << "New positionEvaluated=" << positionEvaluated << endl;
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
             evaluation[moveIndex] = eval;
             threadTotal += positionEvaluated;
 
-            if (moves.empty()) {
+            if (moves.empty() || activeThreads < threads.size()) {
                 cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
                 totalPositionsEvaluated += threadTotal;
                 threadTotal += 0;
+
                 if (--activeThreads == 0) {
                     doneCondition.notify_all();
                 }

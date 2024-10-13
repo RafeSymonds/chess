@@ -15,7 +15,7 @@ pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
     vector<Move> moves = board.getAllPossibleMoves();
 
 
-    size_t totalPositions = 0;
+    size_t totalPositions = moves.size();
 
     bool whiteTurn = board.isWhiteTurn();
     double best = whiteTurn ? -numeric_limits<double>::max() : numeric_limits<double>::max();
@@ -23,6 +23,7 @@ pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
     for (const Move& newMove : moves) {
         auto result
           = alphaBetaPruning(newMove, depth - 1, -numeric_limits<double>::max(), numeric_limits<double>::max());
+
         totalPositions += result.second;
         if (whiteTurn) {
             best = max(best, result.first);
@@ -38,24 +39,24 @@ pair<double, size_t> Worker::generateBestMove(int depth, const Move& move) {
 pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
     PieceTypes pieceRemoved = board.processMove(move);
 
-    // cout << "Depth " << depth << "\n";
-
     if (depth == 0) {
+        double eval = board.evaluation();
         board.unProcessMove(move, pieceRemoved);
-        return { 0, 0 };
+        return { eval, 0 };
     }
 
     double value = 0;
     vector<Move> moves = board.getAllPossibleMoves();
 
-
-    pair<double, size_t> result = { 0, 0 };
+    size_t totalPositionsEvaluated = moves.size();
 
     if (board.isWhiteTurn()) {
         value = -numeric_limits<double>::max();
 
         for (const Move& newMove : moves) {
             auto result = alphaBetaPruning(newMove, depth - 1, alpha, beta);
+
+            totalPositionsEvaluated += result.second;
 
             value = max(value, result.first);
 
@@ -70,6 +71,9 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
 
         for (const Move& newMove : moves) {
             auto result = alphaBetaPruning(newMove, depth - 1, alpha, beta);
+
+            totalPositionsEvaluated += result.second;
+
             value = min(value, result.first);
 
             if (value < alpha) {
@@ -81,7 +85,7 @@ pair<double, size_t> Worker::alphaBetaPruning(const Move& move, int depth, doubl
     }
 
     board.unProcessMove(move, pieceRemoved);
-    return { value, moves.size() + result.second };
+    return { value, totalPositionsEvaluated };
 }
 
 void Worker::processMove(const Move& move) {

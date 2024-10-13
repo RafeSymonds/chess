@@ -36,7 +36,7 @@ Board::Board(const string& fen) {
                 blackKingPosition = { row, column };
             } else if (piece == PieceTypes::none) {
                 int val = c - '0';
-                column += val;
+                column += val - 1;
             }
             ++column;
         }
@@ -684,4 +684,15 @@ vector<Move> Board::getAllPossibleMoves() {
     }
 
     return allMoves;
+}
+
+double Board::evaluation() const {
+    double eval = 0;
+
+    for (int r = 0; r < boardSize; ++r) {
+        for (int c = 0; c < boardSize; ++c) {
+            eval += getValueFromPieceType(board[r][c]);
+        }
+    }
+    return eval;
 }

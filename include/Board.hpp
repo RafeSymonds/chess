@@ -72,6 +72,8 @@ public:
 
     std::pair<Move, bool> processUserInput(const std::string& userInput) const;
 
+    double evaluation() const;
+
     Board& operator=(const Board& board) = default;
 };
 
