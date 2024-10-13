@@ -17,6 +17,7 @@ struct Position {
 
     bool operator==(const Position& other) const { return row == other.row && column == other.column; }
     Position operator+(const Position& other) const { return { row + other.row, column + other.column }; }
+    Position operator*(int step) const { return { row * step, column * step }; }
 };
 
 inline bool validPosition(const Position& position) {
@@ -40,6 +41,17 @@ const std::vector<Position> diagonalDirections = {
     {  1, -1 }, // Bottom-Left
     { -1,  1 }, // Top-Right
     { -1, -1 }  // Top-Left
+};
+
+const std::vector<Position> kingMoves = {
+    { -1, -1 }, // Top-Left
+    { -1,  0 }, // Up
+    { -1,  1 }, // Top-Right
+    {  0, -1 }, // Left
+    {  0,  1 }, // Right
+    {  1, -1 }, // Bottom-Left
+    {  1,  0 }, // Down
+    {  1,  1 }  // Bottom-Righ}
 };
 
 const static std::vector<Position> knightMoves = {

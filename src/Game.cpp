@@ -10,8 +10,10 @@
 using namespace std;
 
 void Game::runGame() {
-    while (!currentBoard.gameIsOver()) {
-        currentBoard.displayBoard();
+    Board& board = engine.getBoard();
+
+    while (!board.gameIsOver()) {
+        board.displayBoard();
 
         string userInput;
 
@@ -21,14 +23,20 @@ void Game::runGame() {
             cout << "\n";
         }
 
-        auto [move, status] = currentBoard.processUserInput(userInput);
+        auto [move, status] = board.processUserInput(userInput);
 
         cout << move << endl;
 
-        if (!status || !currentBoard.validMoveWithCheck(move)) {
+        if (!status || !board.validMoveWithCheck(move)) {
             cout << "Please provide a valid move" << endl;
             continue;
         }
-        currentBoard.processMove(move);
+
+
+        engine.processMove(move);
+
+        Move computerMove = engine.findBestMove();
+
+        engine.processMove(computerMove);
     }
 }

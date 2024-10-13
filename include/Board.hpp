@@ -38,26 +38,40 @@ private:
     bool isValidMoveForPawn(const Move& move, PieceTypes pieceType) const;
     bool isValidMoveForKnight(const Move& move) const;
     bool isValidMoveForRook(const Move& move) const;
-
     bool isValidMoveForBishop(const Move& move) const;
     bool isValidMoveForQueen(const Move& move) const;
     bool isValidMoveForKing(const Move& move) const;
+
+    std::vector<Move> getPawnMoves(const Position& position) const;
+    std::vector<Move> getRookMoves(const Position& position) const;
+    std::vector<Move> getKnightMoves(const Position& position) const;
+    std::vector<Move> getBishopMoves(const Position& position) const;
+    std::vector<Move> getQueenMoves(const Position& position) const;
+    std::vector<Move> getKingMoves(const Position& position) const;
 
 public:
     Board()
         : Board(defaultBoardPosition) {}
     Board(const std::string& fen);
+    Board(const Board& board) = default;
+
+
+    std::vector<Move> getAllPossibleMoves();
 
     bool validMoveNoCheck(const Move& move) const;
     bool validMoveWithCheck(const Move& move);
 
-    void processMove(const Move& move);
+    PieceTypes processMove(const Move& move);
+    void unProcessMove(const Move& move, PieceTypes pieceRemoved);
 
     void displayBoard() const;
 
     bool gameIsOver() const;
+    bool isWhiteTurn() const;
 
     std::pair<Move, bool> processUserInput(const std::string& userInput) const;
+
+    Board& operator=(const Board& board) = default;
 };
 
 #endif
