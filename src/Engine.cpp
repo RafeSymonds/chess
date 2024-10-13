@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstddef>
 #include <iterator>
+#include <limits>
 #include <thread>
 
 #include "Board.hpp"
@@ -19,6 +20,8 @@ Engine::Engine()
     , moves(0)
     , stop(false)
     , depth(1)
+    , alpha(-numeric_limits<double>::max())
+    , beta(numeric_limits<double>::max())
     , totalPositionsEvaluated(0) {
     generateWorkers();
 }
@@ -29,6 +32,8 @@ Engine::Engine(int threadNum, const Board& board, int depth)
     , threads(threadNum)
     , stop(false)
     , depth(depth)
+    , alpha(-numeric_limits<double>::max())
+    , beta(numeric_limits<double>::max())
     , totalPositionsEvaluated(0) {
     generateWorkers();
 }
@@ -91,10 +96,11 @@ Move Engine::findBestMove() {
 
     long long totalMicroseconds = duration.count();
     long long seconds = totalMicroseconds / 1000000;
+    long long milliseconds = totalMicroseconds / 1000;
     long long microseconds = totalMicroseconds % 1000000;
 
-    cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << microseconds
-         << "\n";
+    cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << milliseconds
+         << " milliseconds and " << microseconds << "microseconds\n";
 
 
     return savedMoves[distance(evaluation.begin(), it)];
@@ -121,17 +127,26 @@ void Engine::workerTask(size_t index) {
             moves.pop_back();
             moveIndex = moves.size();
         }
-        auto [eval, positionEvaluated] = workers[index].generateBestMove(depth, move);
+        WorkerResult workerResult = workers[index].generateBestMove(depth - 1, move, alpha, beta);
 
-        cout << "New positionEvaluated=" << positionEvaluated << endl;
+
+        cout << "New positionEvaluated=" << workerResult.positionsEvaluated << "\n";
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
-            evaluation[moveIndex] = eval;
-            threadTotal += positionEvaluated;
+            evaluation[moveIndex] = workerResult.eval;
+
+            if (board.isWhiteTurn()) {
+                // alpha = max(alpha, workerResult.alpha);
+            } else {
+                // beta = min(beta, workerResult.beta);
+            }
+
+            threadTotal += workerResult.positionsEvaluated;
+
 
             if (moves.empty() || activeThreads < threads.size()) {
-                cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
+                cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << "\n";
                 totalPositionsEvaluated += threadTotal;
                 threadTotal += 0;
 

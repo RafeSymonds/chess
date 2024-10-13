@@ -1,0 +1,9 @@
+Preoptimization
+
+Depth 7
+e4: 302574636 positions in 32 seconds - responds e5
+Nf3:  3535485741 positions in 493 seconds - responds Nc6
+
+Use Alpha Beta results for future threads
+e4: 
+Nf3:

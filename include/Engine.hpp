@@ -32,6 +32,9 @@ private:
 
     int depth;
 
+    double alpha;
+    double beta;
+
     std::atomic<size_t> totalPositionsEvaluated;
 
 public:
