@@ -1,18 +1,24 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
 
+
+constexpr int boardSize = 8;
+constexpr int numBoardSquares = 64;
+const std::string defaultBoardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+
+
 enum PieceTypes : std::int8_t {
-    blackPawn = -6,
+    blackPawn,
     blackKnight,
     blackBishop,
     blackRook,
     blackQueen,
     blackKing,
-    none,
     whitePawn,
     whiteKnight,
     whiteBishop,
@@ -21,36 +27,100 @@ enum PieceTypes : std::int8_t {
     whiteKing
 };
 
-inline PieceTypes getPieceTypeFromChar(char c) {
-    switch (c) {
-    case 'p':
-        return blackPawn;
-    case 'P':
-        return whitePawn;
-    case 'n':
-        return blackKnight;
-    case 'N':
-        return whiteKnight;
-    case 'b':
-        return blackBishop;
-    case 'B':
-        return whiteBishop;
-    case 'r':
-        return blackRook;
-    case 'R':
-        return whiteRook;
-    case 'q':
-        return blackQueen;
-    case 'Q':
-        return whiteQueen;
-    case 'k':
-        return blackKing;
-    case 'K':
-        return whiteKing;
-    default:
-        return none;
-    }
+constexpr uint64_t pawnAttackingLeft = ~0x8080808080808080;
+constexpr uint64_t pawnAttackingRight = ~0x0101010101010101;
+
+
+constexpr uint64_t rowMasks(int row) {
+    return 0xFFULL << row;
 }
+constexpr uint64_t columnMasks(int column) {
+    return 0x0101010101010101ULL << column;
+}
+
+
+constexpr std::array<uint64_t, numBoardSquares> knightMoves() {
+    std::array<uint64_t, numBoardSquares> moves {};
+
+    for (int i = 0; i < numBoardSquares; ++i) {
+        uint64_t move = 0;
+
+        // Check if moving left 2 is possible
+        if (i % boardSize >= 2) {
+            if (i / boardSize >= 1) {
+                move |= (1ULL << (i - (2 * boardSize) - 1));   // left 2 up 1
+            }
+            if (i / boardSize <= boardSize - 2) {
+                move |= (1ULL << (i + (2 * boardSize) - 1));   // left 2 down 1
+            }
+        }
+
+        // Check if moving left 1 is possible
+        if (i % boardSize >= 1) {
+            if (i / boardSize >= 2) {
+                move |= (1ULL << (i - (boardSize + 1)));   // left 1 up 2
+            }
+            if (i / boardSize <= boardSize - 3) {
+                move |= (1ULL << (i + (boardSize - 1)));   // left 1 down 2
+            }
+        }
+
+        // Check if moving right 1 is possible
+        if (i % boardSize <= boardSize - 2) {
+            if (i / boardSize >= 2) {
+                move |= (1ULL << (i - (boardSize - 1)));   // right 1 up 2
+            }
+            if (i / boardSize <= boardSize - 3) {
+                move |= (1ULL << (i + (boardSize + 1)));   // right 1 down 2
+            }
+        }
+
+        // Check if moving right 2 is possible
+        if (i % boardSize <= boardSize - 3) {
+            if (i / boardSize >= 1) {
+                move |= (1ULL << (i - (2 * boardSize) + 1));   // right 2 up 1
+            }
+            if (i / boardSize <= boardSize - 2) {
+                move |= (1ULL << (i + (2 * boardSize) - 1));   // right 2 down 1
+            }
+        }
+
+        moves.at(i) = move;
+    }
+
+    return moves;
+};
+
+struct Position {
+    int row;
+    int column;
+    Position(int row, int column)
+        : row(row)
+        , column(column) {}
+};
+
+const std::vector<int> straightDirections = { -boardSize, boardSize, -1, 1 };
+
+// Define directions for diagonal movement (Bishops and Queens)
+const std::vector<Position> diagonalDirections = {
+    {  1,  1 }, // Bottom-Right
+    {  1, -1 }, // Bottom-Left
+    { -1,  1 }, // Top-Right
+    { -1, -1 }  // Top-Left
+};
+
+const std::vector<Position> kingMoves = {
+    { -1, -1 }, // Top-Left
+    { -1,  0 }, // Up
+    { -1,  1 }, // Top-Right
+    {  0, -1 }, // Left
+    {  0,  1 }, // Right
+    {  1, -1 }, // Bottom-Left
+    {  1,  0 }, // Down
+    {  1,  1 }  // Bottom-Righ}
+};
+
+
 inline char getCharFromPieceType(PieceTypes piece) {
     switch (piece) {
     case blackPawn:
@@ -81,14 +151,6 @@ inline char getCharFromPieceType(PieceTypes piece) {
         return '.';
     }
 }
-
-constexpr int boardSize = 8;
-const std::string defaultBoardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-
-inline bool sameSide(PieceTypes piece1, PieceTypes piece2) {
-    return (piece1 > none && piece2 > none) || (piece1 < none && piece2 < none);
-}
-
 const std::vector<std::vector<int>> whitePawnPositionValues = {
     {  0,  0,   0,   0,   0,   0,  0,  0 },
     { 50, 50,  50,  50,  50,  50, 50, 50 },
@@ -247,7 +309,6 @@ inline double getValueFromPieceType(PieceTypes piece, int row, int column) {
         return 20000 + whiteKingMiddleGamePositionValues[row][column];
     case blackKing:
         return -20000 + blackKingMiddleGamePositionValues[row][column];
-    case none:
     default:
         return 0;
     }

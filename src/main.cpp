@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <iostream>
 #include <string>
 
 #include <getopt.h>
@@ -5,8 +7,9 @@
 #include <bits/getopt_core.h>
 #include <bits/getopt_ext.h>
 
+#include "Board.hpp"
 #include "Constants.hpp"
-#include "Game.hpp"
+#include "Move.hpp"
 
 using namespace std;
 
@@ -63,9 +66,27 @@ int main(int argc, char* argv[]) {
     cout << std::boolalpha;
 
     Options options;
-
     getMode(argc, argv, options);
 
-    Game game(options.threadNum, options.startBoard, options.depth);
-    game.runGame();
+    Board board("rnbqkbnr/pppppppp/8/8/3PP3/P1P2P1P/1P4P1/RNBQKBNR");
+
+    uint64_t x = board.getWhitePawnAttacks();
+
+    cout << "Start\n";
+    for (int i = 0; i < 64; ++i) {
+        if (i % 8 == 0 && i != 0) {
+            cout << "\n";
+        }
+        if ((x & 1) == 1) {
+            cout << "x ";
+        } else {
+            cout << "  ";
+        }
+
+        x >>= 1;
+    }
+    cout << "\n";
+
+
+    cout << "Done" << endl;
 }
