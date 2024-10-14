@@ -67,13 +67,11 @@ Move Engine::findBestMove() {
 
     totalPositionsEvaluated = moves.size();
 
-    cout << "Moves len = " << moves.size() << endl;
-
     evaluation.resize(moves.size());
 
     activeThreads = min(threads.size(), moves.size());
 
-    cout << "Active threads " << activeThreads << endl;
+    cout << "Moves len=" << moves.size() << " Active threads=" << activeThreads << " Depth=" << depth << endl;
 
     condition.notify_all();
 
@@ -127,10 +125,11 @@ void Engine::workerTask(size_t index) {
             moves.pop_back();
             moveIndex = moves.size();
         }
+
+        workers[index].resetTotalEvaluations();
         WorkerResult workerResult = workers[index].generateBestMove(depth - 1, move, alpha, beta);
 
-
-        cout << "New positionEvaluated=" << workerResult.positionsEvaluated << "\n";
+        cout << "New positionEvaluated=" << workerResult.positionsEvaluated << endl;
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
@@ -146,9 +145,10 @@ void Engine::workerTask(size_t index) {
 
 
             if (moves.empty() || activeThreads < threads.size()) {
-                cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << "\n";
+                cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
                 totalPositionsEvaluated += threadTotal;
-                threadTotal += 0;
+
+                threadTotal = 0;
 
                 if (--activeThreads == 0) {
                     doneCondition.notify_all();

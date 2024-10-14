@@ -62,8 +62,8 @@ public:
     bool validMoveNoCheck(const Move& move) const;
     bool validMoveWithCheck(const Move& move);
 
-    PieceTypes processMove(const Move& move);
-    void unProcessMove(const Move& move, PieceTypes pieceRemoved);
+    std::pair<PieceTypes, PieceTypes> processMove(const Move& move);
+    void unProcessMove(const Move& move, std::pair<PieceTypes, PieceTypes> startEndPieces);
 
     void displayBoard() const;
 

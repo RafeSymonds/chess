@@ -9,3 +9,7 @@ Nf3: 268228716 positions in 27 seconds - responds Nc6
 -- Use Alpha Beta results for future threads - Depth 7
 e4: 36017375 positions in 3 seconds - responds e5
 Nf3: 268228716 positions in 23 seconds - responds Nc6
+
+-- Member variable for total positions evaluated
+e4: 36017375 positions in 3 seconds - responds e5
+Nf3: 268228716 positions in 25 seconds - responds Nc6

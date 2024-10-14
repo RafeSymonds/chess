@@ -279,67 +279,55 @@ bool Board::validMoveWithCheck(const Move& move) {
         return false;
     }
 
+    auto startEndPieces = processMove(move);
+
+
+    bool valid = getPieceType(move.end) > none ? !kingInCheck(whiteKingPosition) : !kingInCheck(blackKingPosition);
+
+    unProcessMove(move, startEndPieces);
+
+    return valid;
+}
+
+pair<PieceTypes, PieceTypes> Board::processMove(const Move& move) {
     PieceTypes& startPlace = getPieceType(move.start);
     PieceTypes& endPlace = getPieceType(move.end);
-    PieceTypes targetPiece = getPieceType(move.end);
 
-    endPlace = startPlace;
-    startPlace = none;
+    PieceTypes originalEndPlace = endPlace;
+    PieceTypes originalStartPlace = startPlace;
 
-    if (endPlace == whiteKing) {
-        whiteKingPosition = move.end;
-    } else if (endPlace == blackKing) {
-        blackKingPosition = move.end;
+    if (move.end.row == 0 && startPlace == whitePawn) {
+        endPlace = whiteQueen;
+    } else if (move.end.row == 7 && startPlace == blackPawn) {
+        endPlace = blackQueen;
+    } else {
+        endPlace = startPlace;
+
+        if (endPlace == whiteKing) {
+            whiteKingPosition = move.end;
+        } else if (endPlace == blackKing) {
+            blackKingPosition = move.end;
+        }
     }
 
-    bool valid = endPlace > none ? !kingInCheck(whiteKingPosition) : !kingInCheck(blackKingPosition);
+    startPlace = none;
+    whiteTurn = !whiteTurn;
 
-    startPlace = endPlace;
-    endPlace = targetPiece;
+    return { originalStartPlace, originalEndPlace };
+}
+
+void Board::unProcessMove(const Move& move, pair<PieceTypes, PieceTypes> startEndPieces) {
+    PieceTypes& startPlace = getPieceType(move.start);
+    PieceTypes& endPlace = getPieceType(move.end);
+
+    startPlace = startEndPieces.first;
+    endPlace = startEndPieces.second;
 
     if (startPlace == whiteKing) {
         whiteKingPosition = move.start;
     } else if (startPlace == blackKing) {
         blackKingPosition = move.start;
     }
-
-
-    return valid;
-}
-
-PieceTypes Board::processMove(const Move& move) {
-    PieceTypes& startPlace = getPieceType(move.start);
-    PieceTypes& endPlace = getPieceType(move.end);
-
-    PieceTypes originalEndPlace = endPlace;
-
-    endPlace = startPlace;
-    startPlace = none;
-
-    if (endPlace == whiteKing) {
-        whiteKingPosition = move.end;
-    } else if (endPlace == blackKing) {
-        blackKingPosition = move.end;
-    }
-
-    whiteTurn = !whiteTurn;
-
-    return originalEndPlace;
-}
-
-void Board::unProcessMove(const Move& move, PieceTypes pieceRemoved) {
-    PieceTypes& startPlace = getPieceType(move.start);
-    PieceTypes& endPlace = getPieceType(move.end);
-
-    if (endPlace == whiteKing) {
-        whiteKingPosition = move.start;
-    } else if (endPlace == blackKing) {
-        blackKingPosition = move.start;
-    }
-
-
-    startPlace = endPlace;
-    endPlace = pieceRemoved;
 
     whiteTurn = !whiteTurn;
 }
@@ -381,7 +369,11 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
     int rowEnd = 8 - (userInput[numChars - 1] - '0');
     int colEnd = userInput[numChars - 2] - 'a';
 
-    if (userInput[0] >= 'a' && userInput[0] <= 'h') {
+    if (userInput[0] == '0') {
+        // short castle
+    } else if (userInput[0] == 'O') {
+        // long castle
+    } else if (userInput[0] >= 'a' && userInput[0] <= 'h') {
         // pawn move
         int directionFrom = whiteTurn ? 1 : -1;
 
@@ -526,9 +518,6 @@ vector<Move> Board::getPawnMoves(const Position& position) const {
 
     Position newPos = position + Position(direction, 0);
 
-    if (!validPosition(newPos)) {
-        return moves;
-    }
 
     if (getPieceType(newPos) == none) {
         moves.emplace_back(position.row, position.column, newPos.row, newPos.column);

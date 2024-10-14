@@ -19,16 +19,10 @@ void Game::runGame() {
 
         cin >> userInput;
 
-        for (int i = 0; i < boardSize; ++i) {
-            cout << "\n";
-        }
-
         auto [move, status] = board.processUserInput(userInput);
 
-        cout << move << endl;
-
         if (!status || !board.validMoveWithCheck(move)) {
-            cout << "Please provide a valid move" << endl;
+            cout << "Please provide a valid move" << "\n";
             continue;
         }
 
