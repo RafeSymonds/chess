@@ -59,7 +59,13 @@ PieceTypes& Board::getPieceType(const Position& position) {
 }
 
 bool Board::pawnAttacks(const Position& position) const {
-    PieceTypes pawnColor = getPieceType(position) < none ? whitePawn : blackPawn;
+    PieceTypes pawnColor = getPieceType(position);
+
+    if (pawnColor == none) {
+        pawnColor = position.row == 7 ? whitePawn : blackPawn;
+    } else {
+        pawnColor = pawnColor < none ? whitePawn : blackPawn;
+    }
 
     int direction = pawnColor == whitePawn ? 1 : -1;
 
@@ -74,7 +80,14 @@ bool Board::pawnAttacks(const Position& position) const {
 }
 
 bool Board::knightAttacks(const Position& position) const {
-    PieceTypes knightColor = getPieceType(position) < none ? whiteKnight : blackKnight;
+    PieceTypes knightColor = getPieceType(position);
+
+    if (knightColor == none) {
+        knightColor = position.row == 7 ? whiteKnight : blackKnight;
+    } else {
+        knightColor = knightColor < none ? whiteKnight : blackKnight;
+    }
+
 
     for (const Position& pos : knightMoves) {
         Position newPos = position + pos;
@@ -87,8 +100,17 @@ bool Board::knightAttacks(const Position& position) const {
 
 bool Board::straightAttacks(const Position& position) const {
     PieceTypes target = getPieceType(position);
-    PieceTypes queenColor = target < none ? whiteQueen : blackQueen;
-    PieceTypes rookColor = target < none ? whiteRook : blackRook;
+    PieceTypes queenColor = getPieceType(position);
+    PieceTypes rookColor = none;
+
+    if (queenColor == none) {
+        queenColor = position.row == 7 ? whiteQueen : blackQueen;
+        rookColor = position.row == 7 ? whiteRook : blackRook;
+    } else {
+        queenColor = queenColor < none ? whiteQueen : blackQueen;
+        rookColor = queenColor < none ? whiteRook : blackRook;
+    }
+
 
     for (const Position& direction : straightDirections) {
         for (int step = 1; step < boardSize; ++step) {
@@ -119,8 +141,17 @@ bool Board::straightAttacks(const Position& position) const {
 
 bool Board::diagonalAttacks(const Position& position) const {
     PieceTypes target = getPieceType(position);
-    PieceTypes queenColor = target < none ? whiteQueen : blackQueen;
-    PieceTypes bishopColor = target < none ? whiteBishop : blackBishop;
+    PieceTypes queenColor = getPieceType(position);
+    PieceTypes bishopColor = none;
+
+    if (queenColor == none) {
+        queenColor = position.row == 7 ? whiteQueen : blackQueen;
+        bishopColor = position.row == 7 ? whiteBishop : blackBishop;
+    } else {
+        queenColor = queenColor < none ? whiteQueen : blackQueen;
+        bishopColor = queenColor < none ? whiteBishop : blackBishop;
+    }
+
 
     for (const Position& direction : diagonalDirections) {
         for (int step = 1; step < boardSize; ++step) {
@@ -236,6 +267,32 @@ bool Board::isValidMoveForQueen(const Move& move) const {
 bool Board::isValidMoveForKing(const Move& move) const {
     int rowDiff = std::abs(move.end.row - move.start.row);
     int colDiff = std::abs(move.end.column - move.start.column);
+
+    if (colDiff == 2 && rowDiff == 0) {
+        if (move.end.column > move.start.column) {
+            // short castle
+            if ((move.start.row == 7 && !whiteShort) || (move.start.row == 0 && !blackShort)) {
+                return false;
+            }
+            for (int c = move.start.column; c <= move.end.column - 1; ++c) {
+                if (kingInCheck(Position(move.start.row, c))) {
+                    return false;
+                }
+            }
+        } else {
+            if ((move.start.row == 7 && !whiteLong) || (move.start.row == 0 && !blackLong)) {
+                return false;
+            }
+
+            for (int c = move.start.column; c >= move.end.column - 1; --c) {
+                if (kingInCheck(Position(move.start.row, c))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     return (rowDiff <= 1 && colDiff <= 1);
 }
 
@@ -304,8 +361,27 @@ pair<PieceTypes, PieceTypes> Board::processMove(const Move& move) {
         endPlace = startPlace;
 
         if (endPlace == whiteKing) {
+            int colDiff = move.end.column - move.start.column;
+            whiteShort = false;
+            whiteLong = false;
+
+            if (colDiff == 2) {
+                processMove(Move(move.start.row, 7, move.start.row, 5));
+            } else if (colDiff == -2) {
+                processMove(Move(move.start.row, 0, move.start.row, 3));
+            }
             whiteKingPosition = move.end;
         } else if (endPlace == blackKing) {
+            int colDiff = move.end.column - move.start.column;
+            blackShort = false;
+            blackLong = false;
+
+            if (colDiff == 2) {
+                processMove(Move(move.start.row, 7, move.start.row, 5));
+            } else if (colDiff == -2) {
+                processMove(Move(move.start.row, 0, move.start.row, 3));
+            }
+
             blackKingPosition = move.end;
         }
     }
@@ -324,8 +400,35 @@ void Board::unProcessMove(const Move& move, pair<PieceTypes, PieceTypes> startEn
     endPlace = startEndPieces.second;
 
     if (startPlace == whiteKing) {
+        int colDiff = move.end.column - move.start.column;
+
+        whiteLong = true;
+        whiteShort = true;
+
+        if (colDiff == 2) {
+            board[7][7] = whiteRook;
+            board[7][5] = none;
+        } else if (colDiff == -2) {
+            board[7][0] = whiteRook;
+            board[7][3] = blackRook;
+        }
+
         whiteKingPosition = move.start;
     } else if (startPlace == blackKing) {
+        int colDiff = move.end.column - move.start.column;
+
+        blackLong = true;
+        blackShort = true;
+
+        if (colDiff == 2) {
+            board[0][7] = whiteRook;
+            board[0][5] = none;
+        } else if (colDiff == -2) {
+            board[0][0] = whiteRook;
+            board[0][3] = blackRook;
+        }
+
+
         blackKingPosition = move.start;
     }
 
@@ -371,8 +474,30 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
 
     if (userInput[0] == '0') {
         // short castle
+        if (whiteTurn) {
+            if (whiteKingPosition == Position(7, 4)) {
+                return { Move(whiteKingPosition, Position(7, 6)), true };
+            }
+            return { {}, false };
+        }
+        if (blackKingPosition == Position(7, 0)) {
+            return { Move(blackKingPosition, Position(0, 6)), true };
+        }
+        return { {}, false };
+
     } else if (userInput[0] == 'O') {
         // long castle
+        if (whiteTurn) {
+            if (whiteKingPosition == Position(7, 4)) {
+                return { Move(whiteKingPosition, Position(7, 2)), true };
+            }
+            return { {}, false };
+        }
+        if (blackKingPosition == Position(7, 0)) {
+            return { Move(blackKingPosition, Position(0, 2)), true };
+        }
+        return { {}, false };
+
     } else if (userInput[0] >= 'a' && userInput[0] <= 'h') {
         // pawn move
         int directionFrom = whiteTurn ? 1 : -1;
@@ -652,6 +777,28 @@ vector<Move> Board::getKingMoves(const Position& position) const {
         }
     }
 
+    if (whiteShort || blackShort) {
+        bool valid = true;
+        for (int c = position.column; c <= 6; ++c) {
+            Position newPos = Position(position.row, c);
+            if (getPieceType(newPos) != none || kingInCheck(Position(position.row, c))) {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid) {
+            moves.emplace_back(position.row, position.column, position.row, 6);
+        }
+    }
+    if (whiteLong) {
+        bool valid = true;
+        for (int c = position.column; c >= 2; --c) {}
+
+        if (valid) {
+            moves.emplace_back(position.row, position.column, 7, 2);
+        }
+    }
     return moves;
 }
 
