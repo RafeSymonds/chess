@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstdint>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -27,6 +26,7 @@ enum PieceTypes : std::int8_t {
     whiteQueen,
     whiteKing
 };
+
 
 constexpr uint64_t pawnAttackingLeft = ~0x8080808080808080;
 constexpr uint64_t pawnAttackingRight = ~0x0101010101010101;
@@ -52,16 +52,8 @@ constexpr std::array<int, 8> knightOffsets = { 17, 15, 10, 6, -6, -10, -15, -17 
 constexpr std::array<int, 4> straightDirections = { -boardSize, boardSize, -1, 1 };
 constexpr std::array<int, 4> diagonalDirections = { -boardSize - 1, -boardSize + 1, boardSize - 1, boardSize + 1 };
 
-const std::vector<Position> kingMoves = {
-    { -1, -1 }, // Top-Left
-    { -1,  0 }, // Up
-    { -1,  1 }, // Top-Right
-    {  0, -1 }, // Left
-    {  0,  1 }, // Right
-    {  1, -1 }, // Bottom-Left
-    {  1,  0 }, // Down
-    {  1,  1 }  // Bottom-Righ}
-};
+constexpr std::array<int, 8> kingDirections
+  = { -boardSize - 1, -boardSize, -boardSize + 1, -1, 1, boardSize - 1, boardSize, boardSize + 1 };
 
 
 inline char getCharFromPieceType(PieceTypes piece) {
@@ -226,7 +218,9 @@ const std::vector<std::vector<int>> blackKingMiddleGamePositionValues = {
     {  30,  40,  40, 50, 50,  40,  40,  30 }
 };
 
-inline double getValueFromPieceType(PieceTypes piece, int row, int column) {
+inline double getValueFromPieceType(PieceTypes piece, int position) {
+    int row = position / 8;
+    int column = position % 8;
     switch (piece) {
     case whitePawn:
         return 100 + whitePawnPositionValues[row][column];
@@ -257,5 +251,37 @@ inline double getValueFromPieceType(PieceTypes piece, int row, int column) {
     }
 }
 
+inline double getValueFromPieceType(int piece, int position) {
+    int row = position / 8;
+    int column = position % 8;
+    switch (piece) {
+    case whitePawn:
+        return 100 + whitePawnPositionValues[row][column];
+    case blackPawn:
+        return -100 + blackPawnPositionValues[row][column];
+    case whiteKnight:
+        return 300 + whiteKnightPositionValues[row][column];
+    case blackKnight:
+        return -300 + blackKnightPositionValues[row][column];
+    case whiteBishop:
+        return 300 + whiteBishopPositionValues[row][column];
+    case blackBishop:
+        return -300 + blackBishopPositionValues[row][column];
+    case whiteRook:
+        return 500 + whiteRookPositionValues[row][column];
+    case blackRook:
+        return -500 + blackRookPositionValues[row][column];
+    case whiteQueen:
+        return 900 + whiteQueenPositionValues[row][column];
+    case blackQueen:
+        return -900 + blackQueenPositionValues[row][column];
+    case whiteKing:
+        return 20000 + whiteKingMiddleGamePositionValues[row][column];
+    case blackKing:
+        return -20000 + blackKingMiddleGamePositionValues[row][column];
+    default:
+        return 0;
+    }
+}
 
 #endif

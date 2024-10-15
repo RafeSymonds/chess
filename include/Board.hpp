@@ -11,7 +11,7 @@
 
 class Board {
 private:
-    uint64_t pieceBB[12];
+    std::array<uint64_t, numTypesPieces> pieceBB;
 
     uint64_t whitePieces = 0;
     uint64_t blackPieces = 0;
@@ -26,32 +26,53 @@ private:
 
     int castleRights = 0b1111;
 
+    bool whiteTurn = true;
+
     std::vector<Move> moves;
 
     std::array<uint64_t, numBoardSquares>& knightMoves;
 
-    std::array<uint64_t, numBoardSquares> generateKnightMoves();
+    std::vector<Move> getStraightMoves(uint64_t pieces, bool white) const;
+    std::vector<Move> getDiagonalMoves(uint64_t pieces, bool white) const;
+
 
 public:
     Board(std::array<uint64_t, numBoardSquares>& knightMoves)
         : Board(defaultBoardPosition, knightMoves) {}
     Board(const std::string& fen, std::array<uint64_t, numBoardSquares>&);
-    Board(const Board& board) = default;
 
-    uint64_t getWhitePawnAttacks() const;
-    uint64_t getBlackPawnAttacks() const;
+    bool isWhiteTurn() const { return whiteTurn; }
+
+    uint64_t getPawnAttacks(bool white) const;
+
     uint64_t getKnightAttacks(bool white) const;
+
     uint64_t getStraightAttacks(uint64_t pieces, bool white) const;
+    uint64_t getRookAttacks(bool white) const;
+
     uint64_t getDiagonalAttacks(uint64_t pieces, bool white) const;
+    uint64_t getBishopAttacks(bool white) const;
+    uint64_t getQueenAttacks(bool white) const;
+    uint64_t getKingAttacks(bool white) const;
 
     std::vector<Move> getPawnMoves(bool white) const;
     std::vector<Move> getKnightMoves(bool white) const;
-    std::vector<Move> getStraightMoves(uint64_t pieces, bool white) const;
-    std::vector<Move> getDiagonalMoves(uint64_t pieces, bool white) const;
+
+    std::vector<Move> getBishopMoves(bool white) const;
+    std::vector<Move> getRookMoves(bool white) const;
     std::vector<Move> getQueenMoves(bool white) const;
     std::vector<Move> getKingMoves(bool white) const;
 
-    void processMove(Move move);
+    uint64_t processMove(Move move);
+    void unProcessMove(Move move, uint64_t previousValue);
+
+    bool moveIsValidWithCheck(Move move, bool white);
+
+    void addValidMoves(const std::vector<Move>& potentialMoves, std::vector<Move>& moves, bool white);
+
+    std::vector<Move> getValidMovesWithCheck();
+
+    double evaluation() const;
 };
 
 #endif

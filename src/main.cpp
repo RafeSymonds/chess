@@ -9,6 +9,7 @@
 
 #include "Board.hpp"
 #include "Constants.hpp"
+#include "Game.hpp"
 #include "Move.hpp"
 
 using namespace std;
@@ -123,32 +124,6 @@ int main(int argc, char* argv[]) {
 
     auto knightMoves = generateKnightMoves();
 
-    Board board("rnbqkbnr/pp4pp/8/8/2p5/3p1p2/PPPPPPPP/RNBQKBNR w Qkq - 0 1", knightMoves);
-
-    uint64_t x = board.getStraightAttacks(board.pieceBB[whiteRook], true);
-
-
-    cout << "Start\n";
-    for (int i = 0; i < 64; ++i) {
-        if (i % 8 == 0 && i != 0) {
-            cout << "\n";
-        }
-        if ((x & 1) == 1) {
-            cout << "x ";
-        } else {
-            cout << "  ";
-        }
-
-        x >>= 1;
-    }
-    cout << "\n";
-
-
-    auto moves = board.getPawnMoves(true);
-
-    for (auto move : moves) {
-        cout << move << "\n";
-    }
-
-    cout << "Done" << endl;
+    Game game(options.threadNum, options.startBoard, options.depth);
+    game.runGame();
 }
