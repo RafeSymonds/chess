@@ -11,6 +11,8 @@
 
 class Board {
 private:
+    uint64_t pieceBB[12];
+
     uint64_t whitePieces = 0;
     uint64_t blackPieces = 0;
 
@@ -50,8 +52,6 @@ public:
     std::vector<Move> getKingMoves(bool white) const;
 
     void processMove(Move move);
-
-    uint64_t pieceBB[12];
 };
 
 #endif
