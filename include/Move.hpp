@@ -6,19 +6,19 @@
 #include "Constants.hpp"
 
 struct Move {
-    int start;
-    int end;
+    uint64_t start;
+    uint64_t end;
     Move() = default;
 
-    Move(int start, int end)
+    Move(uint64_t start, uint64_t end)
         : start(start)
         , end(end) {}
 
 
     friend std::ostream& operator<<(std::ostream& os, const Move& move) {
-        os << "(" << move.start / boardSize << ", " << move.start % boardSize << ")"
+        os << "(" << __builtin_ctzll(move.start) / boardSize << ", " << __builtin_ctzll(move.start) % boardSize << ")"
            << " -> "
-           << "(" << move.end / boardSize << ", " << move.end % boardSize << ")"
+           << "(" << __builtin_ctzll(move.end) / boardSize << ", " << __builtin_ctzll(move.end) % boardSize << ")"
            << "\n";
 
 

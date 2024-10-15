@@ -3,13 +3,14 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <vector>
-
 
 constexpr int boardSize = 8;
 constexpr int numBoardSquares = 64;
 const std::string defaultBoardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+constexpr int numTypesPieces = 12;
 
 
 enum PieceTypes : std::int8_t {
@@ -32,64 +33,12 @@ constexpr uint64_t pawnAttackingRight = ~0x0101010101010101;
 
 
 constexpr uint64_t rowMasks(int row) {
-    return 0xFFULL << row;
+    return 0xFFULL << (row * 8);
 }
 constexpr uint64_t columnMasks(int column) {
     return 0x0101010101010101ULL << column;
 }
 
-
-constexpr std::array<uint64_t, numBoardSquares> knightMoves() {
-    std::array<uint64_t, numBoardSquares> moves {};
-
-    for (int i = 0; i < numBoardSquares; ++i) {
-        uint64_t move = 0;
-
-        // Check if moving left 2 is possible
-        if (i % boardSize >= 2) {
-            if (i / boardSize >= 1) {
-                move |= (1ULL << (i - (2 * boardSize) - 1));   // left 2 up 1
-            }
-            if (i / boardSize <= boardSize - 2) {
-                move |= (1ULL << (i + (2 * boardSize) - 1));   // left 2 down 1
-            }
-        }
-
-        // Check if moving left 1 is possible
-        if (i % boardSize >= 1) {
-            if (i / boardSize >= 2) {
-                move |= (1ULL << (i - (boardSize + 1)));   // left 1 up 2
-            }
-            if (i / boardSize <= boardSize - 3) {
-                move |= (1ULL << (i + (boardSize - 1)));   // left 1 down 2
-            }
-        }
-
-        // Check if moving right 1 is possible
-        if (i % boardSize <= boardSize - 2) {
-            if (i / boardSize >= 2) {
-                move |= (1ULL << (i - (boardSize - 1)));   // right 1 up 2
-            }
-            if (i / boardSize <= boardSize - 3) {
-                move |= (1ULL << (i + (boardSize + 1)));   // right 1 down 2
-            }
-        }
-
-        // Check if moving right 2 is possible
-        if (i % boardSize <= boardSize - 3) {
-            if (i / boardSize >= 1) {
-                move |= (1ULL << (i - (2 * boardSize) + 1));   // right 2 up 1
-            }
-            if (i / boardSize <= boardSize - 2) {
-                move |= (1ULL << (i + (2 * boardSize) - 1));   // right 2 down 1
-            }
-        }
-
-        moves.at(i) = move;
-    }
-
-    return moves;
-};
 
 struct Position {
     int row;
@@ -99,15 +48,9 @@ struct Position {
         , column(column) {}
 };
 
-const std::vector<int> straightDirections = { -boardSize, boardSize, -1, 1 };
-
-// Define directions for diagonal movement (Bishops and Queens)
-const std::vector<Position> diagonalDirections = {
-    {  1,  1 }, // Bottom-Right
-    {  1, -1 }, // Bottom-Left
-    { -1,  1 }, // Top-Right
-    { -1, -1 }  // Top-Left
-};
+constexpr std::array<int, 8> knightOffsets = { 17, 15, 10, 6, -6, -10, -15, -17 };
+constexpr std::array<int, 4> straightDirections = { -boardSize, boardSize, -1, 1 };
+constexpr std::array<int, 4> diagonalDirections = { -boardSize - 1, -boardSize + 1, boardSize - 1, boardSize + 1 };
 
 const std::vector<Position> kingMoves = {
     { -1, -1 }, // Top-Left
