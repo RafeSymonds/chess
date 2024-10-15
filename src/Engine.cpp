@@ -13,8 +13,8 @@
 
 
 using namespace std;
-Engine::Engine()
-    : board(defaultBoardPosition)
+Engine::Engine(std::array<uint64_t, numBoardSquares>& knightMoves)
+    : board(defaultBoardPosition, knightMoves)
     , workers(1, Worker(board))
     , threads(1)
     , moves(0)

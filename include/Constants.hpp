@@ -86,6 +86,36 @@ inline char getCharFromPieceType(PieceTypes piece) {
         return '.';
     }
 }
+inline char getCharFromPieceType(int piece) {
+    switch (piece) {
+    case blackPawn:
+        return 'p';
+    case whitePawn:
+        return 'P';
+    case blackKnight:
+        return 'n';
+    case whiteKnight:
+        return 'N';
+    case blackBishop:
+        return 'b';
+    case whiteBishop:
+        return 'B';
+    case blackRook:
+        return 'r';
+    case whiteRook:
+        return 'R';
+    case blackQueen:
+        return 'q';
+    case whiteQueen:
+        return 'Q';
+    case blackKing:
+        return 'k';
+    case whiteKing:
+        return 'K';
+    default:
+        return '.';
+    }
+}
 const std::vector<std::vector<int>> whitePawnPositionValues = {
     {  0,  0,   0,   0,   0,   0,  0,  0 },
     { 50, 50,  50,  50,  50,  50, 50, 50 },

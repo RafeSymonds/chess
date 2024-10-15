@@ -41,6 +41,16 @@ public:
         : Board(defaultBoardPosition, knightMoves) {}
     Board(const std::string& fen, std::array<uint64_t, numBoardSquares>&);
 
+    Board(const Board& other) = default;
+
+    Board& operator=(const Board& other) {
+        if (this != &other) {
+            Board temp(other);
+            std::swap(*this, temp);
+        }
+        return *this;
+    };
+
     bool isWhiteTurn() const { return whiteTurn; }
 
     uint64_t getPawnAttacks(bool white) const;
@@ -73,6 +83,10 @@ public:
     std::vector<Move> getValidMovesWithCheck();
 
     double evaluation() const;
+
+    std::pair<Move, bool> processUserInput(const std::string& userInput) const;
+
+    void displayBoard() const;
 };
 
 #endif

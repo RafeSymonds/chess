@@ -262,7 +262,7 @@ uint64_t Board::getStraightAttacks(uint64_t pieces, bool white) const {
             while (true) {
                 newPos = newPos + dir;
 
-                if (newPos >= numBoardSquares) {
+                if (newPos < 0 || newPos >= numBoardSquares) {
                     break;
                 }
 
@@ -507,6 +507,9 @@ uint64_t Board::getKingAttacks(bool white) const {
     for (int dir : kingDirections) {
         int newPos = startSquare + dir;
 
+        if (newPos < 0 || newPos >= numBoardSquares) {
+            continue;
+        }
         int rowDiff = abs(row - (newPos / boardSize));
         int colDiff = abs(col - (newPos % boardSize));
 
@@ -683,7 +686,6 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
     int rowStart = -1;
     int colStart = -1;
 
-
     for (size_t i = 1; i < userInput.size() - 2; ++i) {
         if (userInput[i] == 'x') {
             continue;
@@ -695,25 +697,70 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
         }
     }
 
-    if (userInput[0] == 'N') {
-        vector<Move> moves = getKnightMoves(whiteTurn);
+    vector<Move> moves;
 
-        for (Move move : moves) {
-            if (move.end != endPositionMask) {
-                continue;
-            }
-            int position = __builtin_ctzll(move.start);
-            if (rowStart != -1 && rowStart != position / boardSize) {
-                continue;
-            }
-            if (colStart != -1 && colStart != position % boardSize) {
-                continue;
-            }
-            return { move, true };
+    switch (userInput[0]) {
+    case 'N':
+        moves = getKnightMoves(whiteTurn);
+        break;
+    case 'B':
+        moves = getBishopMoves(whiteTurn);
+        break;
+    case 'R':
+        moves = getRookMoves(whiteTurn);
+        break;
+    case 'Q':
+        moves = getQueenMoves(whiteTurn);
+        break;
+    case 'K':
+        moves = getKingMoves(whiteTurn);
+    default:
+        break;
+    }
+
+    for (Move move : moves) {
+        if (move.end != endPositionMask) {
+            continue;
+        }
+        int position = __builtin_ctzll(move.start);
+        if (rowStart != -1 && rowStart != position / boardSize) {
+            continue;
+        }
+        if (colStart != -1 && colStart != position % boardSize) {
+            continue;
+        }
+        return { move, true };
+    }
+    return { Move(), true };
+}
+
+
+void Board::displayBoard() const {
+    vector<std::vector<char>> boardCharacters(boardSize, vector<char>(boardSize, '.'));
+
+    for (int i = 0; i < numTypesPieces; ++i) {
+        uint64_t pieces = pieceBB[i];
+
+
+        while (pieces != 0) {
+            int startSquare = __builtin_ctzll(pieces);
+            pieces &= pieces - 1;
+
+            boardCharacters[startSquare / boardSize][startSquare % boardSize] = getCharFromPieceType(i);
         }
     }
-    if (userInput[0] == 'R' || userInput[0] == 'Q') {}
-    if (userInput[0] == 'B' || userInput[0] == 'Q') {}
-    if (userInput[0] == 'K') {}
-    return { Move(), true };
+
+    for (int r = 0; r < boardSize; ++r) {
+        cout << boardSize - r << " ";
+
+        for (int c = 0; c < boardSize; ++c) {
+            cout << boardCharacters[r][c] << " ";
+        }
+        cout << "\n";
+    }
+
+    for (char i = 'a'; i <= 'h'; ++i) {
+        cout << i << " ";
+    }
+    cout << "\n";
 }

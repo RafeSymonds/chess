@@ -12,7 +12,7 @@ void Game::runGame() {
     Board& board = engine.getBoard();
 
     while (true) {
-        // board.displayBoard();
+        board.displayBoard();
 
         string userInput;
 
@@ -20,7 +20,7 @@ void Game::runGame() {
 
         auto [move, status] = board.processUserInput(userInput);
 
-        if (!status || !board.validMoveWithCheck(move)) {
+        if (!status || !board.moveIsValidWithCheck(move, board.isWhiteTurn())) {
             cout << "Please provide a valid move" << "\n";
             continue;
         }
