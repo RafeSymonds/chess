@@ -18,8 +18,7 @@ struct Move {
     friend std::ostream& operator<<(std::ostream& os, const Move& move) {
         os << "(" << __builtin_ctzll(move.start) / boardSize << ", " << __builtin_ctzll(move.start) % boardSize << ")"
            << " -> "
-           << "(" << __builtin_ctzll(move.end) / boardSize << ", " << __builtin_ctzll(move.end) % boardSize << ")"
-           << "\n";
+           << "(" << __builtin_ctzll(move.end) / boardSize << ", " << __builtin_ctzll(move.end) % boardSize << ")";
 
 
         return os;

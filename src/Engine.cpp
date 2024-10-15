@@ -100,6 +100,10 @@ Move Engine::findBestMove() {
     cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << milliseconds
          << " milliseconds and " << microseconds << " microseconds\n";
 
+    for (size_t i = 0; i < savedMoves.size(); ++i) {
+        cout << savedMoves[i] << " - " << evaluation[i] << "\n";
+    }
+
 
     return savedMoves[distance(evaluation.begin(), it)];
 }
