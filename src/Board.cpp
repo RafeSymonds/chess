@@ -88,6 +88,11 @@ Board::Board(const string& fen, std::array<uint64_t, numBoardSquares>* knightMov
     blackPieces = pieceBB[blackPawn] | pieceBB[blackKnight] | pieceBB[blackBishop] | pieceBB[blackRook]
                 | pieceBB[blackQueen] | pieceBB[blackKing];
 
+    whiteNonSlidingAttacking = getPawnAttacks(true) | getKnightAttacks(true) | getKingAttacks(true);
+    blackNonSlidingAttacking = getPawnAttacks(false) | getKnightAttacks(false) | getKingAttacks(false);
+
+    whiteSlidingAttacking = getBishopAttacks(true) | getRookAttacks(true) | getQueenAttacks(true);
+    blackSlidingAttacking = getBishopAttacks(false) | getRookAttacks(false) | getQueenAttacks(false);
 
     for (int pieceType = blackPawn; pieceType <= whiteKing; ++pieceType) {
         uint64_t pieces = pieceBB[pieceType];
@@ -750,6 +755,69 @@ void Board::addValidMoves(const std::vector<Move>& potentialMoves, std::vector<M
 
 std::vector<Move> Board::getValidMovesWithCheck() {
     vector<Move> moves;
+
+    uint64_t king = whiteTurn ? pieceBB[whiteKing] : pieceBB[blackKing];
+
+    uint64_t sameColor = whiteTurn ? whitePieces : blackPieces;
+    uint64_t oppositeColor = whiteTurn ? blackPieces : whitePieces;
+
+    uint64_t slidingAttacks = 0;
+    uint64_t nonSlidingAttacks = 0;
+
+    if (whiteTurn) {
+        slidingAttacks = blackSlidingAttacking;
+        nonSlidingAttacks = blackNonSlidingAttacking;
+
+    } else {
+        slidingAttacks = whiteSlidingAttacking;
+        nonSlidingAttacks = whiteNonSlidingAttacking;
+    }
+
+    uint64_t combinedAttacks = slidingAttacks | nonSlidingAttacks;
+
+    // calculate pinned pieces here
+
+    uint64_t pinnedPieces = 0;
+
+    int kingPosition = __builtin_ctzll(king);
+
+    for (int dir : kingDirections) {
+        int newPos = kingPosition + dir;
+        while (true) {
+            uint64_t newPosMask = 1ULL << newPos;
+
+            if ((oppositeColor & newPosMask) != 0) {
+                break;
+            }
+
+            uint64_t sameColorNewPos = sameColor & newPosMask;
+
+            if ((sameColorNewPos & slidingAttacks) != 0) {
+                pinnedPieces |= newPosMask;
+            }
+            if (sameColorNewPos != 0) {
+                break;
+            }
+        }
+    }
+
+
+    if ((king & slidingAttacks) != 0) {
+        // currently under attack by sliding piece
+        // need to block, capture attacker, or move out of the way
+        // if there are 2+ pieces we have to move out of the way
+        // need to mark pinned pieces as well and not let them move off of the direction
+    }
+
+    if ((king & nonSlidingAttacks) != 0) {
+        // currently attacked by pawn or by knight
+        // need to capture attacker or move out of the way
+        // need to mark pinned pieces as well and not let them move off of the direction
+    }
+    // currently not in check
+    // only need to check if moving reveals a sliding attack
+    // mark pinned pieces and do not let pinned pieces move off attack line
+
 
     addValidMoves(getPawnMoves(whiteTurn), moves, whiteTurn);
     addValidMoves(getKnightMoves(whiteTurn), moves, whiteTurn);
