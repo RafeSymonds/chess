@@ -643,51 +643,41 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
     int rowEnd = 8 - (userInput[numChars - 1] - '0');
     int colEnd = userInput[numChars - 2] - 'a';
 
-    if (userInput[0] == '0') {
-        // short castle
-        if (whiteTurn) {
-            if (whiteKingPosition == Position(7, 4)) {
-                return { Move(whiteKingPosition, Position(7, 6)), true };
+    int endPosition = rowEnd * boardSize + colEnd;
+    uint64_t endPositionMask = 1ULL << endPosition;
+
+    if (userInput[0] >= 'a' && userInput[0] <= 'h') {
+        vector<Move> moves = getPawnMoves(whiteTurn);
+
+        if (userInput.size() == 2) {
+            for (Move move : moves) {
+                if (move.end != endPositionMask) {
+                    continue;
+                }
+                int position = __builtin_ctzll(move.start);
+
+                if (position % boardSize != colEnd) {
+                    continue;
+                }
+
+                return { move, true };
             }
-            return { {}, false };
-        }
-        if (blackKingPosition == Position(7, 0)) {
-            return { Move(blackKingPosition, Position(0, 6)), true };
-        }
-        return { {}, false };
+        } else {
+            int colStart = userInput[0] - 'a';
 
-    } else if (userInput[0] == 'O') {
-        // long castle
-        if (whiteTurn) {
-            if (whiteKingPosition == Position(7, 4)) {
-                return { Move(whiteKingPosition, Position(7, 2)), true };
+            for (Move move : moves) {
+                if (move.end != endPositionMask) {
+                    continue;
+                }
+                int position = __builtin_ctzll(move.start);
+
+                if (position % boardSize != colStart) {
+                    continue;
+                }
+
+                return { move, true };
             }
-            return { {}, false };
         }
-        if (blackKingPosition == Position(7, 0)) {
-            return { Move(blackKingPosition, Position(0, 2)), true };
-        }
-        return { {}, false };
-
-    } else if (userInput[0] >= 'a' && userInput[0] <= 'h') {
-        // pawn move
-        int directionFrom = whiteTurn ? 1 : -1;
-
-        if ((rowEnd >= 6 && whiteTurn) || (rowEnd <= 1 && !whiteTurn)) {
-            return { {}, false };
-        }
-
-
-        if (numChars == 2) {
-            if (getPieceType(Position(rowEnd + directionFrom, colEnd)) == none) {
-                directionFrom *= 2;
-            }
-
-            return { Move(rowEnd + directionFrom, colEnd, rowEnd, colEnd), true };
-        }
-
-        int columnStart = userInput[0] - 'a';
-        return { Move(rowEnd + directionFrom, columnStart, rowEnd, colEnd), true };
     }
 
     int rowStart = -1;
@@ -706,101 +696,24 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
     }
 
     if (userInput[0] == 'N') {
-        // knight
-        for (int pos : knightMoves) {
-            int newPos = endPosition + pos;
-            if ((rowStart != -1 && newPos.row != rowStart) && (colStart != -1 && newPos.column != colStart)) {
+        vector<Move> moves = getKnightMoves(whiteTurn);
+
+        for (Move move : moves) {
+            if (move.end != endPositionMask) {
                 continue;
             }
-
-            if (!validPosition(newPos)) {
+            int position = __builtin_ctzll(move.start);
+            if (rowStart != -1 && rowStart != position / boardSize) {
                 continue;
             }
-            PieceTypes piece = getPieceType(newPos);
-            if ((whiteTurn && piece == whiteKnight) || (!whiteTurn && piece == blackKnight)) {
-                return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-            }
-        }
-    }
-    if (userInput[0] == 'R' || userInput[0] == 'Q') {
-        bool isRook = (userInput[0] == 'R');
-
-        for (int direction : straightDirections) {
-            for (int step = 1; step < boardSize; ++step) {
-                Position newPos = endPosition + direction * step;
-                if (!validPosition(newPos)) {
-                    break;
-                }
-                if ((rowStart != -1 && newPos.row != rowStart) && (colStart != -1 && newPos.column != colStart)) {
-                    continue;
-                }
-
-                PieceTypes piece = getPieceType(newPos);
-
-                if (piece == none) {
-                    continue;
-                }
-
-                if (isRook && ((whiteTurn && piece == whiteRook) || (!whiteTurn && piece == blackRook))) {
-                    return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-                }
-
-                if (!isRook && ((whiteTurn && piece == whiteQueen) || (!whiteTurn && piece == blackQueen))) {
-                    return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-                }
-
-                break;
-            }
-        }
-    }
-    if (userInput[0] == 'B' || userInput[0] == 'Q') {
-        bool isBishop = (userInput[0] == 'B');
-
-        for (const Position& direction : diagonalDirections) {
-            for (int step = 1; step < boardSize; ++step) {
-                Position newPos = endPosition + direction * step;
-                if (!validPosition(newPos)) {
-                    break;
-                }
-                if ((rowStart != -1 && newPos.row != rowStart) && (colStart != -1 && newPos.column != colStart)) {
-                    continue;
-                }
-
-                PieceTypes piece = getPieceType(newPos);
-
-                if (piece == none) {
-                    continue;
-                }
-
-                if (isBishop && ((whiteTurn && piece == whiteBishop) || (!whiteTurn && piece == blackBishop))) {
-                    return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-                }
-
-                if (!isBishop && ((whiteTurn && piece == whiteQueen) || (!whiteTurn && piece == blackQueen))) {
-                    return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-                }
-
-                break;
-            }
-        }
-    }
-    if (userInput[0] == 'K') {
-        for (const Position& pos : kingMoves) {
-            Position newPos = endPosition + pos;
-            if (!validPosition(newPos)) {
+            if (colStart != -1 && colStart != position % boardSize) {
                 continue;
             }
-
-            if ((rowStart != -1 && newPos.row != rowStart) && (colStart != -1 && newPos.column != colStart)) {
-                continue;
-            }
-
-            PieceTypes piece = getPieceType(newPos);
-
-            if ((whiteTurn && piece == whiteKing) || (!whiteTurn && piece == blackKing)) {
-                return { Move(newPos.row, newPos.column, rowEnd, colEnd), true };
-            }
+            return { move, true };
         }
     }
+    if (userInput[0] == 'R' || userInput[0] == 'Q') {}
+    if (userInput[0] == 'B' || userInput[0] == 'Q') {}
+    if (userInput[0] == 'K') {}
     return { Move(), true };
 }
