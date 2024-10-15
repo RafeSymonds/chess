@@ -11,7 +11,7 @@ using namespace std;
 
 
 WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha, double beta) {
-    auto startEndPieces = board.processMove(move);
+    int startEndPieces = board.processMove(move);
     vector<Move> moves = board.getValidMovesWithCheck();
 
 
@@ -57,9 +57,9 @@ WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha,
 }
 
 double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
-    uint64_t previousValue = board.processMove(move);
+    int previousValue = board.processMove(move);
 
-    if (depth <= 0 && previousValue == 0) {
+    if (depth <= 0 && previousValue == -1) {
         double eval = board.evaluation();
         board.unProcessMove(move, previousValue);
 

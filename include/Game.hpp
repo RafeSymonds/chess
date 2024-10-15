@@ -11,10 +11,10 @@ private:
     Engine engine;
 
 public:
-    Game(std::array<uint64_t, numBoardSquares>& knightMoves)
+    Game(std::array<uint64_t, numBoardSquares>* knightMoves)
         : Game(1, defaultBoardPosition, 3, knightMoves) {};
 
-    Game(int threadNum, const std::string& fen, int depth, std::array<uint64_t, numBoardSquares>& knightMoves)
+    Game(int threadNum, const std::string& fen, int depth, std::array<uint64_t, numBoardSquares>* knightMoves)
         : currentBoard(fen, knightMoves)
         , engine(threadNum, currentBoard, depth) {};
 

@@ -1,3 +1,5 @@
+8 Threads
+
 -- Preoptimization - Depth 7
 e4: 302574636 positions in 32 seconds - responds e5
 Nf3:  3535485741 positions in 493 seconds - responds Nc6
@@ -13,3 +15,7 @@ Nf3: 268228716 positions in 23 seconds - responds Nc6
 -- Member variable for total positions evaluated
 e4: 36017375 positions in 3 seconds - responds e5
 Nf3: 268228716 positions in 25 seconds - responds Nc6
+
+-- Bitboard starter - no castling, no pawn promotion, no en passant - Depth 7
+e4: 112950110 positions in 11 seconds - responds Nc6
+Nf3: 405735433 positions in 37 seconds - responds Nb4

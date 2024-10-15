@@ -13,7 +13,7 @@
 
 
 using namespace std;
-Engine::Engine(std::array<uint64_t, numBoardSquares>& knightMoves)
+Engine::Engine(std::array<uint64_t, numBoardSquares>* knightMoves)
     : board(defaultBoardPosition, knightMoves)
     , workers(1, Worker(board))
     , threads(1)
@@ -98,7 +98,7 @@ Move Engine::findBestMove() {
     long long microseconds = totalMicroseconds % 1000000;
 
     cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << milliseconds
-         << " milliseconds and " << microseconds << "microseconds\n";
+         << " milliseconds and " << microseconds << " microseconds\n";
 
 
     return savedMoves[distance(evaluation.begin(), it)];

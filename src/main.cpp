@@ -124,6 +124,6 @@ int main(int argc, char* argv[]) {
 
     auto knightMoves = generateKnightMoves();
 
-    Game game(options.threadNum, options.startBoard, options.depth, knightMoves);
+    Game game(options.threadNum, options.startBoard, options.depth, &knightMoves);
     game.runGame();
 }

@@ -11,7 +11,7 @@
 
 class Board {
 private:
-    std::array<uint64_t, numTypesPieces> pieceBB;
+    std::array<uint64_t, numTypesPieces> pieceBB {};
 
     uint64_t whitePieces = 0;
     uint64_t blackPieces = 0;
@@ -30,26 +30,35 @@ private:
 
     std::vector<Move> moves;
 
-    std::array<uint64_t, numBoardSquares>& knightMoves;
+    std::array<uint64_t, numBoardSquares>* knightMoves;
 
     std::vector<Move> getStraightMoves(uint64_t pieces, bool white) const;
     std::vector<Move> getDiagonalMoves(uint64_t pieces, bool white) const;
 
 
 public:
-    Board(std::array<uint64_t, numBoardSquares>& knightMoves)
+    Board(std::array<uint64_t, numBoardSquares>* knightMoves)
         : Board(defaultBoardPosition, knightMoves) {}
-    Board(const std::string& fen, std::array<uint64_t, numBoardSquares>&);
+    Board(const std::string& fen, std::array<uint64_t, numBoardSquares>* knightMoves);
 
     Board(const Board& other) = default;
 
     Board& operator=(const Board& other) {
         if (this != &other) {
-            Board temp(other);
-            std::swap(*this, temp);
+            pieceBB = other.pieceBB;
+            whitePieces = other.whitePieces;
+            blackPieces = other.blackPieces;
+            whiteSlidingAttacking = other.whiteSlidingAttacking;
+            whiteNonSlidingAttacking = other.whiteNonSlidingAttacking;
+            blackNonSlidingAttacking = other.blackNonSlidingAttacking;
+            blackSlidingAttacking = other.blackSlidingAttacking;
+            castleRights = other.castleRights;
+            whiteTurn = other.whiteTurn;
+            moves = other.moves;
         }
+
         return *this;
-    };
+    }
 
     bool isWhiteTurn() const { return whiteTurn; }
 
@@ -73,8 +82,8 @@ public:
     std::vector<Move> getQueenMoves(bool white) const;
     std::vector<Move> getKingMoves(bool white) const;
 
-    uint64_t processMove(Move move);
-    void unProcessMove(Move move, uint64_t previousValue);
+    int processMove(Move move);
+    void unProcessMove(Move move, int pieceTypeRemoved);
 
     bool moveIsValidWithCheck(Move move, bool white);
 
