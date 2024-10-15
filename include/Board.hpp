@@ -28,6 +28,8 @@ private:
 
     bool whiteTurn = true;
 
+    double currentEval = 0;
+
     std::vector<Move> moves;
 
     std::array<uint64_t, numBoardSquares>* knightMoves;
@@ -81,6 +83,9 @@ public:
     std::vector<Move> getRookMoves(bool white) const;
     std::vector<Move> getQueenMoves(bool white) const;
     std::vector<Move> getKingMoves(bool white) const;
+
+    int processMoveWithReEvaulation(Move move);
+    void unProcessMoveWithReEvaulation(Move move, int pieceTypeRemoved);
 
     int processMove(Move move);
     void unProcessMove(Move move, int pieceTypeRemoved);

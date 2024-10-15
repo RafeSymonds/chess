@@ -87,6 +87,18 @@ Board::Board(const string& fen, std::array<uint64_t, numBoardSquares>* knightMov
 
     blackPieces = pieceBB[blackPawn] | pieceBB[blackKnight] | pieceBB[blackBishop] | pieceBB[blackRook]
                 | pieceBB[blackQueen] | pieceBB[blackKing];
+
+
+    for (int pieceType = blackPawn; pieceType <= whiteKing; ++pieceType) {
+        uint64_t pieces = pieceBB[pieceType];
+
+        while (pieces != 0) {
+            int pos = __builtin_ctzll(pieces);
+            currentEval += getValueFromPieceType(pieceType, pos);
+
+            pieces &= pieces - 1;
+        }
+    }
 };
 
 uint64_t Board::getPawnAttacks(bool white) const {
@@ -138,13 +150,13 @@ vector<Move> Board::getPawnMoves(bool white) const {
             }
 
             // Attack left
-            target = startSquareMask >> (boardSize - 1);
+            target = startSquareMask >> (boardSize + 1);
             if ((attackLeft & target) != 0) {
                 moves.emplace_back(startSquareMask, target);
             }
 
             // Attack right
-            target = startSquareMask >> (boardSize + 1);
+            target = startSquareMask >> (boardSize - 1);
             if ((attackRight & target) != 0) {
                 moves.emplace_back(startSquareMask, target);
             }
@@ -153,7 +165,7 @@ vector<Move> Board::getPawnMoves(bool white) const {
         uint64_t startRow = rowMasks(1);
 
         uint64_t singleStep = (pawns << boardSize) & emptySquares;
-        uint64_t doubleStep = ((pawns & startRow) << (boardSize * 2)) & emptySquares;
+        uint64_t doubleStep = ((pawns & startRow) << (boardSize * 2)) & emptySquares & (singleStep << boardSize);
         uint64_t attackLeft = (pawns << (boardSize - 1)) & pawnAttackingRight & whitePieces;
         uint64_t attackRight = (pawns << (boardSize + 1)) & pawnAttackingLeft & whitePieces;
 
@@ -176,13 +188,13 @@ vector<Move> Board::getPawnMoves(bool white) const {
             }
 
             // Attack left
-            target = startSquareMask << (boardSize + 1);
+            target = startSquareMask << (boardSize - 1);
             if ((attackLeft & target) != 0) {
                 moves.emplace_back(startSquareMask, target);
             }
 
             // Attack right
-            target = startSquareMask << (boardSize - 1);
+            target = startSquareMask << (boardSize + 1);
             if ((attackRight & target) != 0) {
                 moves.emplace_back(startSquareMask, target);
             }
@@ -319,18 +331,10 @@ std::vector<Move> Board::getStraightMoves(uint64_t pieces, bool white) const {
     uint64_t oppositeColor = white ? blackPieces : whitePieces;
 
 
-    uint64_t startingPositionMask = 1;
-
-    while (pieces > 0) {
+    while (pieces != 0) {
         int startingPosition = __builtin_ctzll(pieces);
         pieces &= pieces - 1;
 
-        if ((pieces & 1) == 0) {
-            pieces >>= 1;
-            startingPositionMask <<= 1;
-            ++startingPosition;
-            continue;
-        }
         for (int dir : straightDirections) {
             int newPos = startingPosition;
             while (true) {
@@ -356,16 +360,15 @@ std::vector<Move> Board::getStraightMoves(uint64_t pieces, bool white) const {
                 if ((sameColor & newPosMask) != 0) {
                     break;
                 }
+
+                uint64_t startingPositionMask = 1ULL << startingPosition;
                 moves.emplace_back(startingPositionMask, newPosMask);
 
-                if ((oppositeColor & startingPositionMask) != 0) {
+                if ((oppositeColor & newPosMask) != 0) {
                     break;
                 }
             }
         }
-        pieces >>= 1;
-        startingPositionMask <<= 1;
-        ++startingPosition;
     }
     return moves;
 }
@@ -455,9 +458,6 @@ std::vector<Move> Board::getDiagonalMoves(uint64_t pieces, bool white) const {
         pieces &= pieces - 1;
 
 
-        uint64_t startingPositionMask = 1ULL << startingPosition;
-
-
         for (int dir : diagonalDirections) {
             int newPos = startingPosition;
             while (true) {
@@ -485,6 +485,7 @@ std::vector<Move> Board::getDiagonalMoves(uint64_t pieces, bool white) const {
                     break;
                 }
 
+                uint64_t startingPositionMask = 1ULL << startingPosition;
                 moves.emplace_back(startingPositionMask, newPosMask);
 
                 // Check for opposite-color pieces
@@ -599,6 +600,75 @@ vector<Move> Board::getKingMoves(bool white) const {
     return moves;
 }
 
+int Board::processMoveWithReEvaulation(Move move) {
+    int pieceTypeRemoved = -1;
+    for (int i = blackPawn; i <= whiteKing; ++i) {
+        if ((pieceBB[i] & move.end) != 0) {
+            pieceBB[i] &= ~move.end;
+            pieceTypeRemoved = i;
+
+            currentEval -= getValueFromPieceType(i, __builtin_ctzll(move.end));
+
+            if (i < whitePawn) {
+                blackPieces = (blackPieces & ~move.end);
+            } else {
+                whitePieces = (whitePieces & ~move.end);
+            }
+            break;
+        }
+    }
+    for (int i = blackPawn; i <= whiteKing; ++i) {
+        if ((pieceBB[i] & move.start) != 0) {
+            pieceBB[i] = (pieceBB[i] & ~move.start) | move.end;
+
+            currentEval += getValueFromPieceType(i, __builtin_ctzll(move.end))
+                         - getValueFromPieceType(i, __builtin_ctzll(move.start));
+
+            if (i < whitePawn) {
+                blackPieces = (blackPieces & ~move.start) | move.end;
+            } else {
+                whitePieces = (whitePieces & ~move.start) | move.end;
+            }
+            break;
+        }
+    }
+
+
+    whiteTurn = !whiteTurn;
+    return pieceTypeRemoved;
+}
+
+void Board::unProcessMoveWithReEvaulation(Move move, int pieceTypeRemoved) {
+    for (int i = blackPawn; i <= whiteKing; ++i) {
+        if ((pieceBB[i] & move.end) != 0) {
+            pieceBB[i] = (pieceBB[i] & ~move.end) | move.start;
+
+            currentEval += -getValueFromPieceType(i, __builtin_ctzll(move.end))
+                         + getValueFromPieceType(i, __builtin_ctzll(move.start));
+
+
+            if (i < whitePawn) {
+                blackPieces = (blackPieces & ~move.end) | move.start;
+            } else {
+                whitePieces = (whitePieces & ~move.end) | move.start;
+            }
+            break;
+        }
+    }
+    if (pieceTypeRemoved != -1) {
+        pieceBB[pieceTypeRemoved] |= move.end;
+
+        currentEval += getValueFromPieceType(pieceTypeRemoved, __builtin_ctzll(move.end));
+
+
+        if (pieceTypeRemoved < whitePawn) {
+            blackPieces = (blackPieces | move.end);
+        } else {
+            whitePieces = (whitePieces | move.end);
+        }
+    }
+    whiteTurn = !whiteTurn;
+}
 
 int Board::processMove(Move move) {
     int pieceTypeRemoved = -1;
@@ -606,6 +676,7 @@ int Board::processMove(Move move) {
         if ((pieceBB[i] & move.end) != 0) {
             pieceBB[i] &= ~move.end;
             pieceTypeRemoved = i;
+
             if (i < whitePawn) {
                 blackPieces = (blackPieces & ~move.end);
             } else {
@@ -626,6 +697,7 @@ int Board::processMove(Move move) {
             break;
         }
     }
+
     whiteTurn = !whiteTurn;
     return pieceTypeRemoved;
 }
@@ -645,6 +717,7 @@ void Board::unProcessMove(Move move, int pieceTypeRemoved) {
     }
     if (pieceTypeRemoved != -1) {
         pieceBB[pieceTypeRemoved] |= move.end;
+
         if (pieceTypeRemoved < whitePawn) {
             blackPieces = (blackPieces | move.end);
         } else {
@@ -682,25 +755,14 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     addValidMoves(getKnightMoves(whiteTurn), moves, whiteTurn);
     addValidMoves(getBishopMoves(whiteTurn), moves, whiteTurn);
     addValidMoves(getRookMoves(whiteTurn), moves, whiteTurn);
+    addValidMoves(getQueenMoves(whiteTurn), moves, whiteTurn);
     addValidMoves(getKingMoves(whiteTurn), moves, whiteTurn);
 
     return moves;
 }
 
 double Board::evaluation() const {
-    double eval = 0;
-    for (int pieceType = blackPawn; pieceType <= whiteKing; ++pieceType) {
-        uint64_t pieces = pieceBB[pieceType];
-
-        while (pieces != 0) {
-            int pos = __builtin_ctzll(pieces);
-            eval += getValueFromPieceType(pieceType, pos);
-
-            pieces &= pieces - 1;
-        }
-    }
-
-    return eval;
+    return currentEval;
 }
 
 pair<Move, bool> Board::processUserInput(const string& userInput) const {

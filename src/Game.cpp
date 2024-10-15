@@ -13,18 +13,25 @@ void Game::runGame() {
 
     while (true) {
         board.displayBoard();
+        cout << "Evaluation: " << board.evaluation() << endl;
 
         string userInput;
 
         cin >> userInput;
 
+        if (userInput == "quit") {
+            return;
+        }
+
         auto [move, status] = board.processUserInput(userInput);
+
 
         if (!status || !board.moveIsValidWithCheck(move, board.isWhiteTurn())) {
             cout << "Please provide a valid move" << "\n";
             continue;
         }
 
+        cout << "Your move: " << move << "\n";
 
         engine.processMove(move);
 

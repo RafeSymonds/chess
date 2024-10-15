@@ -11,7 +11,7 @@ using namespace std;
 
 
 WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha, double beta) {
-    int startEndPieces = board.processMove(move);
+    int startEndPieces = board.processMoveWithReEvaulation(move);
     vector<Move> moves = board.getValidMovesWithCheck();
 
 
@@ -52,16 +52,16 @@ WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha,
         }
     }
 
-    board.unProcessMove(move, startEndPieces);
+    board.unProcessMoveWithReEvaulation(move, startEndPieces);
     return { value, alpha, beta, moves.size() + totalEvaluations };
 }
 
 double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
-    int previousValue = board.processMove(move);
+    int previousValue = board.processMoveWithReEvaulation(move);
 
     if (depth <= 0 && previousValue == -1) {
         double eval = board.evaluation();
-        board.unProcessMove(move, previousValue);
+        board.unProcessMoveWithReEvaulation(move, previousValue);
 
         ++totalEvaluations;
 
@@ -72,7 +72,7 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
     vector<Move> moves = board.getValidMovesWithCheck();
 
     if (moves.size() == 0) {
-        board.unProcessMove(move, previousValue);
+        board.unProcessMoveWithReEvaulation(move, previousValue);
 
         ++totalEvaluations;
 
@@ -110,7 +110,7 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
         }
     }
 
-    board.unProcessMove(move, previousValue);
+    board.unProcessMoveWithReEvaulation(move, previousValue);
     return value;
 }
 

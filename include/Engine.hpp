@@ -41,6 +41,7 @@ public:
     Engine(std::array<uint64_t, numBoardSquares>* knightMoves);
     Engine(int threadNum, const Board& board, int depth);
     ~Engine();
+
     Board& getBoard();
 
     void generateWorkers();
