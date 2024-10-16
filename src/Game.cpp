@@ -13,7 +13,6 @@ void Game::runGame() {
 
     while (true) {
         board.displayBoard();
-        cout << "Evaluation: " << board.evaluation() << endl;
 
         string userInput;
 
@@ -27,7 +26,8 @@ void Game::runGame() {
 
 
         if (!status || !board.moveIsValidWithCheck(move, board.isWhiteTurn())) {
-            cout << "Please provide a valid move" << "\n";
+            cout << "Please provide a valid move"
+                 << "\n";
             continue;
         }
 

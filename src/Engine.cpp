@@ -105,6 +105,13 @@ Move Engine::findBestMove() {
     // }
 
 
+    if (savedMoves.empty()) {
+        board.setGameOver();
+        return {};
+    }
+
+    cout << "\nEvaluation: " << *it << "\n";
+
     return savedMoves[distance(evaluation.begin(), it)];
 }
 

@@ -30,6 +30,8 @@ private:
 
     double currentEval = 0;
 
+    bool gameOver = false;
+
     std::vector<Move> moves;
 
     std::array<uint64_t, numBoardSquares>* knightMoves;
@@ -63,6 +65,9 @@ public:
     }
 
     bool isWhiteTurn() const { return whiteTurn; }
+
+    bool isGameOver() const { return gameOver; }
+    void setGameOver() { gameOver = true; }
 
     uint64_t getPawnAttacks(bool white) const;
 

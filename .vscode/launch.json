@@ -9,7 +9,12 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/build/main_debug",
-            "args": ["-d", "7", "-t", "8"],
+            "args": [
+                "-d",
+                "3",
+                "-t",
+                "1"
+            ],
             "cwd": "${workspaceFolder}"
         }
     ]

@@ -23,3 +23,5 @@ Nf3: 677142963 positions in 74 seconds - responds Nc6
 -- Bitboard - calculate eval only when moving a piece - Depth 7 - 64% of processing time is calculating checks
 e4: 139169202 positions in 14 seconds - responds e5
 Nf3: 677142963 positions in 69 seconds - responds d6
+
+-- Bitboard - improved check calculations

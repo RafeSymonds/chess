@@ -29,10 +29,10 @@ void getMode(int argc, char* argv[], Options& options) {
     int index = 0;
 
     option long_options[] = {
-        {   "help",       no_argument, nullptr, 'h' },
-        { "thread", required_argument, nullptr, 't' },
-        {  "depth", required_argument, nullptr, 'd' },
-        {  "start", required_argument, nullptr, 's' }
+        {  "help",       no_argument, nullptr, 'h'},
+        {"thread", required_argument, nullptr, 't'},
+        { "depth", required_argument, nullptr, 'd'},
+        { "start", required_argument, nullptr, 's'}
     };
     while ((choice = getopt_long(argc, argv, "ht:d:s:", long_options, &index)) != -1) {
         switch (choice) {
@@ -72,7 +72,7 @@ array<uint64_t, numBoardSquares> generateKnightMoves() {
             if (i / boardSize >= 1) {
                 move |= (1ULL << (i - boardSize - 2));   // left 2 up 1
             }
-            if (i / boardSize < boardSize - 2) {
+            if (i / boardSize <= boardSize - 2) {
                 move |= (1ULL << (i + boardSize - 2));   // left 2 down 1
             }
         }
@@ -93,7 +93,7 @@ array<uint64_t, numBoardSquares> generateKnightMoves() {
             if (i / boardSize >= 1) {
                 move |= (1ULL << (i - boardSize + 2));   // right 2 up 1
             }
-            if (i / boardSize < boardSize - 2) {
+            if (i / boardSize <= boardSize - 2) {
                 move |= (1ULL << (i + boardSize + 2));   // right 2 down 1
             }
         }

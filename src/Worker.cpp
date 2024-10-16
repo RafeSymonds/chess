@@ -69,9 +69,10 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
     }
 
     double value = 0;
+
     vector<Move> moves = board.getValidMovesWithCheck();
 
-    if (moves.size() == 0) {
+    if (moves.empty()) {
         board.unProcessMoveWithReEvaulation(move, previousValue);
 
         ++totalEvaluations;

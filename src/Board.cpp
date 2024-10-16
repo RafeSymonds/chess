@@ -373,7 +373,7 @@ std::vector<Move> Board::getStraightMoves(uint64_t pieces, bool white) const {
 }
 
 uint64_t Board::getRookAttacks(bool white) const {
-    uint64_t pieces = white ? pieceBB[whiteBishop] : pieceBB[blackBishop];
+    uint64_t pieces = white ? pieceBB[whiteRook] : pieceBB[blackRook];
 
     return getStraightAttacks(pieces, white);
 }
@@ -409,10 +409,10 @@ uint64_t Board::getDiagonalAttacks(uint64_t pieces, bool white) const {
                 if (dir == boardSize - 1 && newPos % boardSize == boardSize - 1) {
                     break;
                 }
-                if (dir == -(boardSize - 1) && newPos % boardSize == 0) {
+                if (dir == -boardSize + 1 && newPos % boardSize == 0) {
                     break;
                 }
-                if (dir == -(boardSize + 1) && newPos % boardSize == boardSize - 1) {
+                if (dir == -boardSize - 1 && newPos % boardSize == boardSize - 1) {
                     break;
                 }
 
@@ -774,18 +774,25 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     uint64_t sameColor = whiteTurn ? whitePieces : blackPieces;
     uint64_t oppositeColor = whiteTurn ? blackPieces : whitePieces;
 
-    uint64_t slidingAttacks = 0;
-    uint64_t nonSlidingAttacks = 0;
+    uint64_t oppositeColorDiagonalPieces
+      = whiteTurn ? pieceBB[blackBishop] | pieceBB[blackQueen] : pieceBB[whiteBishop] | pieceBB[whiteQueen];
+
+    uint64_t oppositeColorStraightPieces
+      = whiteTurn ? pieceBB[blackRook] | pieceBB[blackQueen] : pieceBB[whiteRook] | pieceBB[whiteQueen];
+
+
+    uint64_t slidingAttacksMask = 0;
+    uint64_t nonSlidingAttacksMask = 0;
 
     if (whiteTurn) {
-        slidingAttacks = getBishopAttacks(false) | getRookAttacks(false) | getQueenAttacks(false);
-        nonSlidingAttacks = getPawnAttacks(false) | getKnightAttacks(false) | getKingAttacks(false);
+        slidingAttacksMask = getBishopAttacks(false) | getRookAttacks(false) | getQueenAttacks(false);
+        nonSlidingAttacksMask = getPawnAttacks(false) | getKnightAttacks(false) | getKingAttacks(false);
     } else {
-        slidingAttacks = getPawnAttacks(true) | getKnightAttacks(true) | getKingAttacks(true);
-        nonSlidingAttacks = getBishopAttacks(true) | getRookAttacks(true) | getQueenAttacks(true);
+        slidingAttacksMask = getBishopAttacks(true) | getRookAttacks(true) | getQueenAttacks(true);
+        nonSlidingAttacksMask = getPawnAttacks(true) | getKnightAttacks(true) | getKingAttacks(true);
     }
 
-    uint64_t combinedAttacks = slidingAttacks | nonSlidingAttacks;
+    uint64_t combinedAttacks = slidingAttacksMask | nonSlidingAttacksMask;
 
     bool doubleSlidingAttack = false;
     int slidingAttackDirection = 0;
@@ -795,18 +802,26 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     int kingRow = kingPosition / boardSize;
     int kingCol = kingPosition % boardSize;
 
+    bool kingUnderAttackBySlidingPiece = (kingMask & slidingAttacksMask) != 0;
 
-    // calculate pinned piece locations and if there slidding attacker location if any
     uint64_t pinnedPieces = 0;
-    for (int dir : kingDirections) {
-        int newPos = kingPosition + dir;
+
+    for (int dir : straightDirections) {
+        int newPos = kingPosition;
+
+        int closestSameColorPieceLocation = -1;
+
         while (true) {
+            int lastRow = newPos / boardSize;
+            int lastCol = newPos % boardSize;
+            newPos = newPos + dir;
+
             if (newPos < 0 || newPos >= numBoardSquares) {
                 break;
             }
 
-            int rowDiff = abs(kingRow - (newPos / boardSize));
-            int colDiff = abs(kingCol - (newPos % boardSize));
+            int rowDiff = abs(lastRow - (newPos / boardSize));
+            int colDiff = abs(lastCol - (newPos % boardSize));
 
             if (rowDiff > 1 || colDiff > 1) {
                 break;
@@ -814,36 +829,140 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
             uint64_t newPosMask = 1ULL << newPos;
 
-            if ((newPosMask & slidingAttackDirection) != 0) {
-                slidingAttackDirection = dir;
-
-                if (slidingAttackDirection != 0) {
+            if (kingUnderAttackBySlidingPiece && (oppositeColorStraightPieces & newPosMask) != 0) {
+                if (slidingPieceAttackerLocation != -1) {
                     doubleSlidingAttack = true;
                     break;
                 }
-            }
-
-            newPosMask = 1ULL << newPos;
-
-            if ((oppositeColor & newPosMask) != 0) {
+                slidingAttackDirection = dir;
                 slidingPieceAttackerLocation = newPos;
                 break;
             }
 
-            uint64_t sameColorNewPosMask = sameColor & newPosMask;
+            if ((sameColor & newPosMask) != 0) {
+                if (closestSameColorPieceLocation != -1) {
+                    break;
+                }
+                closestSameColorPieceLocation = newPos;
+            }
 
-            if ((sameColorNewPosMask & slidingAttacks) != 0) {
-                pinnedPieces |= newPosMask;
+            if ((oppositeColorStraightPieces & newPosMask) != 0) {
+                pinnedPieces |= (1ULL << closestSameColorPieceLocation);
                 break;
             }
-            if (sameColorNewPosMask != 0) {
+
+            if ((oppositeColor & newPosMask) != 0) {
                 break;
             }
         }
     }
 
-    vector<Move> moves;
+    for (int dir : diagonalDirections) {
+        int newPos = kingPosition;
 
+        int closestSameColorPieceLocation = -1;
+
+        while (true) {
+            int lastRow = newPos / boardSize;
+            int lastCol = newPos % boardSize;
+
+            newPos = newPos + dir;
+
+            if (newPos < 0 || newPos >= numBoardSquares) {
+                break;
+            }
+
+            int rowDiff = abs(lastRow - (newPos / boardSize));
+            int colDiff = abs(lastCol - (newPos % boardSize));
+
+            if (rowDiff > 1 || colDiff > 1) {
+                break;
+            }
+
+
+            uint64_t newPosMask = 1ULL << newPos;
+
+            if (kingUnderAttackBySlidingPiece && (oppositeColorDiagonalPieces & newPosMask) != 0) {
+                if (slidingPieceAttackerLocation != -1) {
+                    doubleSlidingAttack = true;
+                    break;
+                }
+                slidingAttackDirection = dir;
+                slidingPieceAttackerLocation = newPos;
+                break;
+            }
+
+            if ((sameColor & newPosMask) != 0) {
+                if (closestSameColorPieceLocation != -1) {
+                    break;
+                }
+                closestSameColorPieceLocation = newPos;
+            }
+
+            if ((oppositeColorDiagonalPieces & newPosMask) != 0) {
+                pinnedPieces |= (1ULL << closestSameColorPieceLocation);
+                break;
+            }
+
+            if ((oppositeColor & newPosMask) != 0) {
+                break;
+            }
+        }
+    }
+
+
+    // calculate pinned piece locations and if there slidding attacker location if any
+    // uint64_t pinnedPieces = 0;
+    // for (int dir : kingDirections) {
+    //     int newPos = kingPosition;
+    //     int friendlyPieceLocation = 0;
+    //     while (true) {
+    //         newPos = newPos + dir;
+
+    //         if (newPos < 0 || newPos >= numBoardSquares) {
+    //             break;
+    //         }
+
+    //         int rowDiff = abs(kingRow - (newPos / boardSize));
+    //         int colDiff = abs(kingCol - (newPos % boardSize));
+
+    //         if (rowDiff > 1 || colDiff > 1) {
+    //             break;
+    //         }
+
+    //         uint64_t newPosMask = 1ULL << newPos;
+
+    //         if (kingUnderAttackBySlidingPiece && (newPosMask & slidingAttacksMask) != 0) {
+    //             slidingAttackDirection = dir;
+
+    //             if (slidingAttackDirection != 0) {
+    //                 doubleSlidingAttack = true;
+    //                 break;
+    //             }
+    //         }
+
+    //         if (kingUnderAttackBySlidingPiece && (oppositeColor & newPosMask) != 0) {
+    //             slidingPieceAttackerLocation = newPos;
+    //             slidingAttackDirection = dir;
+    //             break;
+    //         }
+
+    //         if ((oppositeColor & newPosMask) != 0) {
+    //             break;
+    //         }
+
+    //         uint64_t sameColorNewPosMask = sameColor & newPosMask;
+
+    //         if ((sameColorNewPosMask & slidingAttacksMask) != 0) {
+    //             friendlyPieceLocation = newPos;
+    //         }
+    //         if (sameColorNewPosMask != 0) {
+    //             break;
+    //         }
+    //     }
+    // }
+
+    vector<Move> moves;
 
     for (Move move : getKingMoves(whiteTurn)) {
         if ((move.end & combinedAttacks) == 0) {
@@ -860,14 +979,12 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         return moves;
     }
 
-    if ((kingMask & slidingAttacks) != 0) {
+    if (kingUnderAttackBySlidingPiece) {
         // currently under attack by 1 sliding piece
         // need to block, capture attacker, or move out of the way
         // not possible for pinned pieces to stop the attack
         // pinned pieces can not move
-
         vector<uint64_t> validEndingSpots;
-
 
         for (int i = kingPosition; i != slidingPieceAttackerLocation; i += slidingAttackDirection) {
             validEndingSpots.push_back(1ULL << i);
@@ -881,14 +998,14 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             for (uint64_t validEndingSpot : validEndingSpots) {
                 if ((move.end & validEndingSpot) != 0) {
                     moves.push_back(move);
+                    break;
                 }
             }
         }
-
         return moves;
     }
 
-    if ((kingMask & nonSlidingAttacks) != 0) {
+    if ((kingMask & nonSlidingAttacksMask) != 0) {
         // currently attacked by pawn or by knight
         // can only be attacked by 1 piece
         // need to capture attacker or move out of the way
@@ -924,6 +1041,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             for (int dir : knightOffsets) {
                 int newPos = kingPosition + dir;
 
+                if (newPos < 0 || newPos >= numBoardSquares) {
+                    continue;
+                }
+
                 int newRow = newPos / boardSize;
                 int newCol = newPos % boardSize;
 
@@ -945,7 +1066,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         }
 
         for (Move move : allPossibleMoves) {
-            if ((move.end & attackSquareMask) != 0) {
+            if (move.end == attackSquareMask && (move.start & pinnedPieces) == 0) {
                 moves.push_back(move);
             }
         }
@@ -964,6 +1085,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             moves.push_back(move);
         }
     }
+
 
     return moves;
 }
@@ -1063,7 +1185,7 @@ pair<Move, bool> Board::processUserInput(const string& userInput) const {
         }
         return { move, true };
     }
-    return { Move(), true };
+    return { Move(), false };
 }
 
 
