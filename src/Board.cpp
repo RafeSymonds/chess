@@ -796,7 +796,9 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
     bool doubleSlidingAttack = false;
     int slidingAttackDirection = 0;
+    int slidingAttackDirection2 = 0;
     int slidingPieceAttackerLocation = -1;
+    int slidingPieceAttackerLocation2 = -1;
 
 
     int kingRow = kingPosition / boardSize;
@@ -832,6 +834,8 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             if (kingUnderAttackBySlidingPiece && (oppositeColorStraightPieces & newPosMask) != 0) {
                 if (slidingPieceAttackerLocation != -1) {
                     doubleSlidingAttack = true;
+                    slidingAttackDirection2 = dir;
+                    slidingPieceAttackerLocation2 = newPos;
                     break;
                 }
                 slidingAttackDirection = dir;
@@ -913,18 +917,45 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
     vector<Move> moves;
 
-    for (const Move& move : getKingMoves(whiteTurn)) {
-        if ((move.end & combinedAttacks) == 0) {
-            // if king move ends on a non attacked square it is a valid move
-            moves.emplace_back(move);
-        }
-    }
 
     vector<Move> allPossibleMoves = getValidMovesNoCheckNoKing(whiteTurn);
 
     if (doubleSlidingAttack) {
         // currently attacked by 2 sliding pieces at the same time
         // only possible move is to have the king move
+        for (int dir : kingDirections) {
+            int newPos = kingPosition + dir;
+
+            if ((dir == slidingAttackDirection && newPos != slidingPieceAttackerLocation)
+                || (dir == slidingAttackDirection2 && newPos != slidingPieceAttackerLocation2)
+                || dir == -slidingAttackDirection || dir == -slidingAttackDirection2) {
+                continue;
+            }
+
+            if (newPos < 0 || newPos >= numBoardSquares) {
+                continue;
+            }
+
+            int newRow = newPos / boardSize;
+            int newCol = newPos % boardSize;
+
+            int rowDiff = abs(newRow - kingRow);
+            int colDiff = abs(newCol - kingCol);
+
+            if (rowDiff > 1 || colDiff > 1) {
+                continue;
+            }
+
+            uint64_t newPosMask = 1ULL << newPos;
+
+            if ((newPosMask & combinedAttacks) != 0) {
+                continue;
+            }
+            if ((newPosMask & sameColor) != 0) {
+                continue;
+            }
+            moves.emplace_back(kingMask, newPosMask);
+        }
         return moves;
     }
 
@@ -933,6 +964,36 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         // need to block, capture attacker, or move out of the way
         // not possible for pinned pieces to stop the attack
         // pinned pieces can not move
+        for (int dir : kingDirections) {
+            int newPos = kingPosition + dir;
+
+            if ((dir == slidingAttackDirection || dir == -slidingAttackDirection)
+                && newPos != slidingPieceAttackerLocation) {
+                continue;
+            }
+            if (newPos < 0 || newPos >= numBoardSquares) {
+                continue;
+            }
+
+            int newRow = newPos / boardSize;
+            int newCol = newPos % boardSize;
+            int rowDiff = abs(newRow - kingRow);
+            int colDiff = abs(newCol - kingCol);
+
+            if (rowDiff > 1 || colDiff > 1) {
+                continue;
+            }
+            uint64_t newPosMask = 1ULL << newPos;
+            if ((newPosMask & combinedAttacks) != 0) {
+                continue;
+            }
+            if ((newPosMask & sameColor) != 0) {
+                continue;
+            }
+            moves.emplace_back(kingMask, newPosMask);
+        }
+
+
         vector<uint64_t> validEndingSpots;
 
         for (int i = kingPosition; i != slidingPieceAttackerLocation; i += slidingAttackDirection) {
@@ -961,6 +1022,13 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         // need to capture attacker or move out of the way
         // not possible for pinned pieces to stop the attack
         // pinned pieces can not move
+
+        for (const Move& move : getKingMoves(whiteTurn)) {
+            if ((move.end & combinedAttacks) == 0) {
+                // if king move ends on a non attacked square it is a valid move
+                moves.emplace_back(move);
+            }
+        }
 
         uint64_t attackSquareMask = 0;
 
@@ -1025,6 +1093,13 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     // currently not in check
     // only need to check if moving reveals a sliding attack
     // mark pinned pieces and do not let pinned pieces move off attack line
+
+    for (const Move& move : getKingMoves(whiteTurn)) {
+        if ((move.end & combinedAttacks) == 0) {
+            // if king move ends on a non attacked square it is a valid move
+            moves.emplace_back(move);
+        }
+    }
 
     for (const Move& move : allPossibleMoves) {
         if ((move.start & pinnedPieces) != 0) {

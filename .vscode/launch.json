@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/build/main_debug",
             "args": [
                 "-d",
-                "3",
+                "5",
                 "-t",
                 "1"
             ],
