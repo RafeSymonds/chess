@@ -989,6 +989,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         for (int i = kingPosition; i != slidingPieceAttackerLocation; i += slidingAttackDirection) {
             validEndingSpots.push_back(1ULL << i);
         }
+        validEndingSpots.push_back(1ULL << slidingPieceAttackerLocation);
 
         for (Move move : allPossibleMoves) {
             if ((move.start & pinnedPieces) != 0) {
@@ -1078,7 +1079,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
     for (Move move : allPossibleMoves) {
         if ((move.start & pinnedPieces) != 0) {
-            if (abs(__builtin_ctzll(move.end) - __builtin_ctzll(move.start)) == slidingAttackDirection) {
+            if (abs(__builtin_ctzll(move.end) - __builtin_ctzll(move.start)) % boardSize == slidingAttackDirection) {
                 moves.push_back(move);
             }
         } else {
