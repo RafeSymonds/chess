@@ -89,8 +89,8 @@ public:
     std::vector<Move> getQueenMoves(bool white) const;
     std::vector<Move> getKingMoves(bool white) const;
 
-    int processMoveWithReEvaulation(Move move);
-    void unProcessMoveWithReEvaulation(Move move, int pieceTypeRemoved);
+    int processMoveWithReEvaulation(const Move& move);
+    void unProcessMoveWithReEvaulation(const Move& move, int pieceTypeRemoved);
 
     int processMove(Move move);
     void unProcessMove(Move move, int pieceTypeRemoved);
