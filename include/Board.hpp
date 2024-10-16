@@ -94,6 +94,8 @@ public:
 
     void addValidMoves(const std::vector<Move>& potentialMoves, std::vector<Move>& moves, bool white);
 
+    std::vector<Move> getValidMovesNoCheckNoKing(bool white);
+
     std::vector<Move> getValidMovesWithCheck();
 
     double evaluation() const;
