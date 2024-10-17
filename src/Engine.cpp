@@ -188,7 +188,7 @@ void Engine::workerTask(size_t index) {
 
             threadTotal += workerResult.positionsEvaluated;
 
-            if ((moves.empty() && movesNeedingProcessing.empty()) || activeThreads < threads.size()) {
+            if ((moves.empty() && movesNeedingProcessing.empty())) {
                 cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
                 totalPositionsEvaluated += threadTotal;
 
