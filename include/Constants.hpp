@@ -28,7 +28,7 @@ enum PieceTypes : std::int8_t {
 };
 
 
-constexpr uint64_t pawnAttackingLeft = ~0x0808080808080808;
+constexpr uint64_t pawnAttackingLeft = ~0x8080808080808080;
 constexpr uint64_t pawnAttackingRight = ~0x0101010101010101;
 
 

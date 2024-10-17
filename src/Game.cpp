@@ -13,6 +13,7 @@ void Game::runGame() {
 
     while (true) {
         board.displayBoard();
+        cout << board.getPawnAttacks(!board.isWhiteTurn()) << endl;
 
         string userInput;
 
