@@ -747,11 +747,11 @@ void Board::addValidMoves(const std::vector<Move>& potentialMoves, std::vector<M
 void Board::getValidMovesNoCheckNoKing(bool white) {
     vector<Move> moves;
 
-    getPawnMoves(white);
-    getKnightMoves(white);
-    getBishopMoves(white);
-    getRookMoves(white);
     getQueenMoves(white);
+    getRookMoves(white);
+    getBishopMoves(white);
+    getKnightMoves(white);
+    getPawnMoves(white);
 }
 
 std::vector<Move> Board::getValidMovesWithCheck() {
