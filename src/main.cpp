@@ -29,10 +29,10 @@ void getMode(int argc, char* argv[], Options& options) {
     int index = 0;
 
     option long_options[] = {
-        {  "help",       no_argument, nullptr, 'h'},
-        {"thread", required_argument, nullptr, 't'},
-        { "depth", required_argument, nullptr, 'd'},
-        { "start", required_argument, nullptr, 's'}
+        {   "help",       no_argument, nullptr, 'h' },
+        { "thread", required_argument, nullptr, 't' },
+        {  "depth", required_argument, nullptr, 'd' },
+        {  "start", required_argument, nullptr, 's' }
     };
     while ((choice = getopt_long(argc, argv, "ht:d:s:", long_options, &index)) != -1) {
         switch (choice) {
@@ -124,6 +124,6 @@ int main(int argc, char* argv[]) {
 
     auto knightMoves = generateKnightMoves();
 
-    Game game(options.threadNum, "r1b2k1r/1pp2ppp/p7/1B1p2P1/3N1P1P/5QK1/q7/2R5", options.depth, &knightMoves);
+    Game game(options.threadNum, options.startBoard, options.depth, &knightMoves);
     game.runGame();
 }

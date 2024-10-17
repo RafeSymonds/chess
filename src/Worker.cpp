@@ -12,12 +12,14 @@ using namespace std;
 
 WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha, double beta) {
     int startEndPieces = board.processMoveWithReEvaulation(move);
+
     vector<Move> moves = board.getValidMovesWithCheck();
 
 
     if (moves.size() == 0) {
+        double eval = board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max();
         board.unProcessMove(move, startEndPieces);
-        return { board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max(), alpha, beta, 1 };
+        return { eval, alpha, beta, 1 };
     }
 
 
@@ -73,11 +75,12 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
     vector<Move> moves = board.getValidMovesWithCheck();
 
     if (moves.empty()) {
+        double eval = board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max();
         board.unProcessMoveWithReEvaulation(move, previousValue);
 
         ++totalEvaluations;
 
-        return board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max();
+        return eval;
     }
 
 

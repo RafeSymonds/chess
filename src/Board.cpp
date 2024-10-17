@@ -831,7 +831,8 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
             uint64_t newPosMask = 1ULL << newPos;
 
-            if (kingUnderAttackBySlidingPiece && (oppositeColorStraightPieces & newPosMask) != 0) {
+            if (kingUnderAttackBySlidingPiece && closestSameColorPieceLocation == -1
+                && (oppositeColorStraightPieces & newPosMask) != 0) {
                 if (slidingPieceAttackerLocation != -1) {
                     doubleSlidingAttack = true;
                     slidingAttackDirection2 = dir;
@@ -886,9 +887,12 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
             uint64_t newPosMask = 1ULL << newPos;
 
-            if (kingUnderAttackBySlidingPiece && (oppositeColorDiagonalPieces & newPosMask) != 0) {
+            if (kingUnderAttackBySlidingPiece && closestSameColorPieceLocation == -1
+                && (oppositeColorDiagonalPieces & newPosMask) != 0) {
                 if (slidingPieceAttackerLocation != -1) {
                     doubleSlidingAttack = true;
+                    slidingAttackDirection2 = dir;
+                    slidingPieceAttackerLocation2 = newPos;
                     break;
                 }
                 slidingAttackDirection = dir;
@@ -920,19 +924,27 @@ std::vector<Move> Board::getValidMovesWithCheck() {
 
     vector<Move> allPossibleMoves = getValidMovesNoCheckNoKing(whiteTurn);
 
-    if (doubleSlidingAttack) {
-        // currently attacked by 2 sliding pieces at the same time
-        // only possible move is to have the king move
+    if (doubleSlidingAttack || ((kingMask & slidingAttacksMask) != 0 && (kingMask & nonSlidingAttacksMask) != 0)) {
+        // currently attacked by 2 sliding pieces or a sliding piece and non sliding piece
+        // only possible move is to have the king move out of the way
+
         for (int dir : kingDirections) {
             int newPos = kingPosition + dir;
 
-            if ((dir == slidingAttackDirection && newPos != slidingPieceAttackerLocation)
-                || (dir == slidingAttackDirection2 && newPos != slidingPieceAttackerLocation2)
-                || dir == -slidingAttackDirection || dir == -slidingAttackDirection2) {
+            if (newPos < 0 || newPos >= numBoardSquares) {
                 continue;
             }
-
-            if (newPos < 0 || newPos >= numBoardSquares) {
+            if (dir == slidingAttackDirection && newPos != slidingPieceAttackerLocation) {
+                continue;
+            }
+            if (slidingPieceAttackerLocation2 != -1 && dir == slidingAttackDirection2
+                && newPos != slidingPieceAttackerLocation2) {
+                continue;
+            }
+            if (dir == -slidingAttackDirection) {
+                continue;
+            }
+            if (slidingAttackDirection2 != -1 && dir == -slidingAttackDirection2) {
                 continue;
             }
 
@@ -956,6 +968,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             }
             moves.emplace_back(kingMask, newPosMask);
         }
+
         return moves;
     }
 
@@ -1038,16 +1051,17 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             // king is being attacked by a pawn
             uint64_t pawns = whiteTurn ? pieceBB[blackPawn] : pieceBB[whitePawn];
 
-            if (kingCol > 0) {
-                int leftAttackPosition = whiteTurn ? kingPosition - boardSize + 1 : kingPosition + boardSize + 1;
+            if (kingCol < boardSize) {
+                // left attack is possible
+                int pawnAttackingLeft = whiteTurn ? kingPosition - boardSize + 1 : kingPosition + boardSize + 1;
 
-                uint64_t leftAttackMask = 1ULL << leftAttackPosition;
+                uint64_t pawnAttackingLeftMask = 1ULL << pawnAttackingLeft;
 
-                if ((pawns & leftAttackMask) != 0) {
-                    attackSquareMask = leftAttackMask;
+                if ((pawns & pawnAttackingLeftMask) != 0) {
+                    attackSquareMask = pawnAttackingLeftMask;
                 }
             }
-            if (attackSquareMask != 0) {
+            if (attackSquareMask == 0) {
                 int rightAttackPosition = whiteTurn ? kingPosition - boardSize - 1 : kingPosition + boardSize - 1;
 
                 attackSquareMask = 1ULL << rightAttackPosition;
@@ -1138,6 +1152,9 @@ std::vector<Move> Board::getValidMovesWithCheck() {
                 continue;
             }
             if (startCol > kingCol && endCol <= kingCol) {
+                continue;
+            }
+            if (abs(startRow - kingRow) != abs(endRow - kingRow) || abs(startCol - kingCol) != abs(endCol - kingCol)) {
                 continue;
             }
             moves.emplace_back(move);
