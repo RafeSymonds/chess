@@ -32,12 +32,13 @@ private:
 
     bool gameOver = false;
 
-    std::vector<Move> moves;
+    std::vector<Move> allPossibleMoves;
+    int allPossibleMovesSize = 0;
 
     std::array<uint64_t, numBoardSquares>* knightMoves;
 
-    std::vector<Move> getStraightMoves(uint64_t pieces, bool white) const;
-    std::vector<Move> getDiagonalMoves(uint64_t pieces, bool white) const;
+    void getStraightMoves(uint64_t pieces, bool white);
+    void getDiagonalMoves(uint64_t pieces, bool white);
 
 
 public:
@@ -58,11 +59,12 @@ public:
             blackSlidingAttacking = other.blackSlidingAttacking;
             castleRights = other.castleRights;
             whiteTurn = other.whiteTurn;
-            moves = other.moves;
+            allPossibleMoves = other.allPossibleMoves;
         }
 
         return *this;
     }
+
 
     bool isWhiteTurn() const { return whiteTurn; }
 
@@ -81,13 +83,13 @@ public:
     uint64_t getQueenAttacks(bool white) const;
     uint64_t getKingAttacks(bool white) const;
 
-    std::vector<Move> getPawnMoves(bool white) const;
-    std::vector<Move> getKnightMoves(bool white) const;
+    void getPawnMoves(bool white);
+    void getKnightMoves(bool white);
 
-    std::vector<Move> getBishopMoves(bool white) const;
-    std::vector<Move> getRookMoves(bool white) const;
-    std::vector<Move> getQueenMoves(bool white) const;
-    std::vector<Move> getKingMoves(bool white) const;
+    void getBishopMoves(bool white);
+    void getRookMoves(bool white);
+    void getQueenMoves(bool white);
+    void getKingMoves(bool white);
 
     int processMoveWithReEvaulation(const Move& move);
     void unProcessMoveWithReEvaulation(const Move& move, int pieceTypeRemoved);
@@ -99,15 +101,18 @@ public:
 
     void addValidMoves(const std::vector<Move>& potentialMoves, std::vector<Move>& moves, bool white);
 
-    std::vector<Move> getValidMovesNoCheckNoKing(bool white);
+    void getValidMovesNoCheckNoKing(bool white);
 
     std::vector<Move> getValidMovesWithCheck();
 
     double evaluation() const;
 
-    std::pair<Move, bool> processUserInput(const std::string& userInput) const;
+    std::pair<Move, bool> processUserInput(const std::string& userInput);
 
     void displayBoard() const;
+
+
+    void resetAllPossibleMoves() { allPossibleMovesSize = 0; }
 };
 
 #endif
