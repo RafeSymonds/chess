@@ -5,7 +5,9 @@
 #include <cstddef>
 #include <iterator>
 #include <limits>
+#include <queue>
 #include <thread>
+#include <vector>
 
 #include "Board.hpp"
 #include "Constants.hpp"
@@ -62,12 +64,27 @@ void Engine::generateWorkers() {
 Move Engine::findBestMove() {
     auto startTime = chrono::system_clock::now();
 
+    if (board.isWhiteTurn()) {
+        movesNeedingProcessing = std::priority_queue<MoveProcessing, std::vector<MoveProcessing>,
+                                                     std::function<bool(const MoveProcessing&, const MoveProcessing&)>>(
+          [this](const MoveProcessing& mp1, const MoveProcessing& mp2) { return whitePQFunctor(mp1, mp2); });
+
+        finalMoveResults = std::set<MoveProcessing, std::function<bool(const MoveProcessing&, const MoveProcessing&)>>(
+          [this](const MoveProcessing& mp1, const MoveProcessing& mp2) { return whiteSetFunctor(mp1, mp2); });
+    } else {
+        cout << "Evaluting for black" << endl;
+
+        movesNeedingProcessing = std::priority_queue<MoveProcessing, std::vector<MoveProcessing>,
+                                                     std::function<bool(const MoveProcessing&, const MoveProcessing&)>>(
+          [this](const MoveProcessing& mp1, const MoveProcessing& mp2) { return blackPQFunctor(mp1, mp2); });
+
+        finalMoveResults = std::set<MoveProcessing, std::function<bool(const MoveProcessing&, const MoveProcessing&)>>(
+          [this](const MoveProcessing& mp1, const MoveProcessing& mp2) { return blackSetFunctor(mp1, mp2); });
+    }
+
     moves = board.getValidMovesWithCheck();
-    vector<Move> savedMoves = moves;
 
     totalPositionsEvaluated = moves.size();
-
-    evaluation.resize(moves.size());
 
     activeThreads = min(threads.size(), moves.size());
 
@@ -77,15 +94,20 @@ Move Engine::findBestMove() {
 
     {
         std::unique_lock<std::mutex> lock(moveMutex);
-        doneCondition.wait(lock, [this] { return moves.empty() && activeThreads == 0; });
+        doneCondition.wait(lock,
+                           [this] { return moves.empty() && activeThreads == 0 && movesNeedingProcessing.empty(); });
     }
 
-    auto it = evaluation.begin();
+    if (finalMoveResults.empty()) {
+        board.setGameOver();
+        return {};
+    }
 
+    auto it = finalMoveResults.begin();
     if (board.isWhiteTurn()) {
-        it = max_element(evaluation.begin(), evaluation.end());
+        it = max_element(finalMoveResults.begin(), finalMoveResults.end(), whiteSetFunctor);
     } else {
-        it = min_element(evaluation.begin(), evaluation.end());
+        it = max_element(finalMoveResults.begin(), finalMoveResults.end(), blackSetFunctor);
     }
 
     auto endTime = chrono::system_clock::now();
@@ -100,51 +122,59 @@ Move Engine::findBestMove() {
     cout << "Evaluated " << totalPositionsEvaluated << " positions in " << seconds << " seconds and " << milliseconds
          << " milliseconds and " << microseconds << " microseconds\n";
 
-    // for (size_t i = 0; i < savedMoves.size(); ++i) {
-    // cout << savedMoves[i] << " - " << evaluation[i] << "\n";
-    // }
 
-
-    if (savedMoves.empty()) {
+    if (finalMoveResults.empty()) {
         board.setGameOver();
         return {};
     }
 
-    cout << "\nEvaluation: " << *it << "\n";
+    cout << "\nEvaluation: " << it->eval << "\n";
 
-    return savedMoves[distance(evaluation.begin(), it)];
+    return it->move;
 }
 
 void Engine::workerTask(size_t index) {
     size_t threadTotal = 0;
     while (true) {
+        MoveProcessing moveProcessing {};
+
         Move move {};
-        size_t moveIndex = -1;
+        int currentDepth = 1;
         {
             std::unique_lock<std::mutex> lock(moveMutex);
-            condition.wait(lock, [this] { return stop || !moves.empty(); });
+            condition.wait(lock, [this] { return stop || !moves.empty() || !movesNeedingProcessing.empty(); });
 
             if (stop) {
                 return;
             }
 
             if (moves.empty()) {
-                continue;
-            }
+                moveProcessing = movesNeedingProcessing.top();
+                movesNeedingProcessing.pop();
 
-            move = moves.back();
-            moves.pop_back();
-            moveIndex = moves.size();
+                move = moveProcessing.move;
+                currentDepth = moveProcessing.depth;
+
+            } else {
+                move = moves.back();
+                moves.pop_back();
+                moveProcessing.move = move;
+                moveProcessing.depth = currentDepth;
+            }
         }
 
         workers[index].resetTotalEvaluations();
-        WorkerResult workerResult = workers[index].generateBestMove(depth - 1, move, alpha, beta);
-
-        cout << "New positionEvaluated=" << workerResult.positionsEvaluated << endl;
+        WorkerResult workerResult = workers[index].generateBestMove(currentDepth - 1, move, alpha, beta);
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
-            evaluation[moveIndex] = workerResult.eval;
+
+            cout << "Finisehd " << move << " with an eval=" << workerResult.eval << " at depth " << currentDepth
+                 << " with positions evaluated=" << workerResult.positionsEvaluated << "\n";
+
+            moveProcessing.eval = workerResult.eval;
+
+            finalMoveResults.insert(moveProcessing);
 
             if (board.isWhiteTurn()) {
                 alpha = max(alpha, workerResult.alpha);
@@ -152,10 +182,13 @@ void Engine::workerTask(size_t index) {
                 beta = min(beta, workerResult.beta);
             }
 
+            if (currentDepth != depth) {
+                movesNeedingProcessing.emplace(move, currentDepth + 1, workerResult.eval);
+            }
+
             threadTotal += workerResult.positionsEvaluated;
 
-
-            if (moves.empty() || activeThreads < threads.size()) {
+            if ((moves.empty() && movesNeedingProcessing.empty()) || activeThreads < threads.size()) {
                 cout << "Thread " << index << " ended with a total of " << threadTotal << " evaluations" << endl;
                 totalPositionsEvaluated += threadTotal;
 
