@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <ostream>
 
 #include "Constants.hpp"
 
@@ -27,8 +28,7 @@ void Game::runGame() {
 
 
         if (!status || !board.moveIsValidWithCheck(move, board.isWhiteTurn())) {
-            cout << "Please provide a valid move"
-                 << "\n";
+            cout << "Please provide a valid move" << "\n";
             continue;
         }
 
@@ -37,6 +37,11 @@ void Game::runGame() {
         engine.processMove(move);
 
         Move computerMove = engine.findBestMove();
+
+        if (board.isGameOver()) {
+            cout << "Game is over. You lost\n";
+            return;
+        }
 
         engine.processMove(computerMove);
     }
