@@ -170,7 +170,8 @@ void Engine::workerTask(size_t index) {
             std::unique_lock<std::mutex> lock(moveMutex);
 
             cout << "Finisehd " << move << " with an eval=" << workerResult.eval << " at depth " << currentDepth
-                 << " with positions evaluated=" << workerResult.positionsEvaluated << "\n";
+                 << " with positions evaluated=" << workerResult.positionsEvaluated << "\n"
+                 << flush;
 
             moveProcessing.eval = workerResult.eval;
 
