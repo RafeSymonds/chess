@@ -138,33 +138,25 @@ void Board::getPawnMoves(bool white) {
             uint64_t target = startSquareMask >> boardSize;
 
             if ((singleStep & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Double step forward move
             target = startSquareMask >> boardSize * 2;
             if ((doubleStep & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Attack left
             target = startSquareMask >> (boardSize + 1);
             if ((attackLeft & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Attack right
             target = startSquareMask >> (boardSize - 1);
             if ((attackRight & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
         }
     } else {
@@ -184,33 +176,25 @@ void Board::getPawnMoves(bool white) {
             // Single step forward move
             uint64_t target = startSquareMask << boardSize;
             if ((singleStep & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Double step forward move
             target = startSquareMask << (boardSize * 2);
             if ((doubleStep & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Attack left
             target = startSquareMask << (boardSize - 1);
             if ((attackLeft & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
 
             // Attack right
             target = startSquareMask << (boardSize + 1);
             if ((attackRight & target) != 0) {
-                allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-                allPossibleMoves[allPossibleMovesSize].end = target;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startSquareMask, target);
             }
         }
     }
@@ -276,9 +260,7 @@ void Board::getKnightMoves(bool white) {
                 continue;
             }
 
-            allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-            allPossibleMoves[allPossibleMovesSize].end = targetMask;
-            ++allPossibleMovesSize;
+            allPossibleMoves.emplace_back(startSquareMask, targetMask);
         }
     }
 }
@@ -371,9 +353,7 @@ void Board::getStraightMoves(uint64_t pieces, bool white) {
 
                 uint64_t startingPositionMask = 1ULL << startingPosition;
 
-                allPossibleMoves[allPossibleMovesSize].start = startingPositionMask;
-                allPossibleMoves[allPossibleMovesSize].end = newPosMask;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startingPositionMask, newPosMask);
 
                 if ((oppositeColor & newPosMask) != 0) {
                     break;
@@ -495,9 +475,8 @@ void Board::getDiagonalMoves(uint64_t pieces, bool white) {
 
                 uint64_t startingPositionMask = 1ULL << startingPosition;
 
-                allPossibleMoves[allPossibleMovesSize].start = startingPositionMask;
-                allPossibleMoves[allPossibleMovesSize].end = newPosMask;
-                ++allPossibleMovesSize;
+                allPossibleMoves.emplace_back(startingPositionMask, newPosMask);
+
                 // Check for opposite-color pieces
                 if ((oppositeColor & newPosMask) != 0) {
                     break;
@@ -590,9 +569,7 @@ void Board::getKingMoves(bool white) {
 
         uint64_t startSquareMask = 1ULL << startSquare;
 
-        allPossibleMoves[allPossibleMovesSize].start = startSquareMask;
-        allPossibleMoves[allPossibleMovesSize].end = targetMask;
-        ++allPossibleMovesSize;
+        allPossibleMoves.emplace_back(startSquareMask, targetMask);
     }
 }
 
@@ -755,8 +732,7 @@ void Board::getValidMovesNoCheckNoKing(bool white) {
 }
 
 std::vector<Move> Board::getValidMovesWithCheck() {
-    allPossibleMovesSize = 0;
-
+    allPossibleMoves.clear();
 
     uint64_t kingMask = whiteTurn ? pieceBB[whiteKing] : pieceBB[blackKing];
     int kingPosition = __builtin_ctzll(kingMask);
@@ -1003,12 +979,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         validEndingSpots.emplace_back(1ULL << slidingPieceAttackerLocation);
 
 
-        allPossibleMovesSize = 0;
+        allPossibleMoves.clear();
         getValidMovesNoCheckNoKing(whiteTurn);
 
-        for (int i = 0; i < allPossibleMovesSize; ++i) {
-            const Move& move = allPossibleMoves[i];
-
+        for (const Move& move : allPossibleMoves) {
             if ((move.start & pinnedPieces) != 0) {
                 continue;
             }
@@ -1030,11 +1004,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
         // not possible for pinned pieces to stop the attack
         // pinned pieces can not move
 
-        allPossibleMovesSize = 0;
+        allPossibleMoves.clear();
         getKingMoves(whiteTurn);
 
-        for (int i = 0; i < allPossibleMovesSize; ++i) {
-            const Move& move = allPossibleMoves[i];
+        for (const Move& move : allPossibleMoves) {
             if ((move.end & combinedAttacks) == 0) {
                 // if king move ends on a non attacked square it is a valid move
                 moves.emplace_back(move);
@@ -1096,11 +1069,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             }
         }
 
-        allPossibleMovesSize = 0;
+        allPossibleMoves.clear();
         getValidMovesNoCheckNoKing(whiteTurn);
 
-        for (int i = 0; i < allPossibleMovesSize; ++i) {
-            const Move& move = allPossibleMoves[i];
+        for (const Move& move : allPossibleMoves) {
             if (move.end == attackSquareMask && (move.start & pinnedPieces) == 0) {
                 moves.emplace_back(move);
             }
@@ -1111,12 +1083,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     // only need to check if moving reveals a sliding attack
     // mark pinned pieces and do not let pinned pieces move off attack line
 
-    allPossibleMovesSize = 0;
+    allPossibleMoves.clear();
     getValidMovesNoCheckNoKing(whiteTurn);
 
-    for (int i = 0; i < allPossibleMovesSize; ++i) {
-        const Move& move = allPossibleMoves[i];
-
+    for (const Move& move : allPossibleMoves) {
         if ((move.start & pinnedPieces) != 0) {
             int startPos = __builtin_ctzll(move.start);
             int endPos = __builtin_ctzll(move.end);
@@ -1166,11 +1136,10 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     }
 
 
-    allPossibleMovesSize = 0;
+    allPossibleMoves.clear();
     getKingMoves(whiteTurn);
 
-    for (int i = 0; i < allPossibleMovesSize; ++i) {
-        const Move& move = allPossibleMoves[i];
+    for (const Move& move : allPossibleMoves) {
         if ((move.end & combinedAttacks) == 0) {
             // if king move ends on a non attacked square it is a valid move
             moves.emplace_back(move);
@@ -1194,15 +1163,13 @@ pair<Move, bool> Board::processUserInput(const string& userInput) {
     int endPosition = rowEnd * boardSize + colEnd;
     uint64_t endPositionMask = 1ULL << endPosition;
 
-    allPossibleMovesSize = 0;
+    allPossibleMoves.clear();
 
     if (userInput[0] >= 'a' && userInput[0] <= 'h') {
         getPawnMoves(whiteTurn);
 
         if (userInput.size() == 2) {
-            for (int i = 0; i < allPossibleMovesSize; ++i) {
-                const Move& move = allPossibleMoves[i];
-
+            for (const Move& move : allPossibleMoves) {
                 if (move.end != endPositionMask) {
                     continue;
                 }
@@ -1217,10 +1184,7 @@ pair<Move, bool> Board::processUserInput(const string& userInput) {
         } else {
             int colStart = userInput[0] - 'a';
 
-            for (int i = 0; i < allPossibleMovesSize; ++i) {
-                const Move& move = allPossibleMoves[i];
-
-
+            for (const Move& move : allPossibleMoves) {
                 if (move.end != endPositionMask) {
                     continue;
                 }
@@ -1268,9 +1232,7 @@ pair<Move, bool> Board::processUserInput(const string& userInput) {
         break;
     }
 
-    for (int i = 0; i < allPossibleMovesSize; ++i) {
-        const Move& move = allPossibleMoves[i];
-
+    for (const Move& move : allPossibleMoves) {
         if (move.end != endPositionMask) {
             continue;
         }

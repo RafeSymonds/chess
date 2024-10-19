@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Constants.hpp"
+#include "FixedSizeVector.hpp"
 #include "Move.hpp"
 
 class Board {
@@ -32,8 +33,7 @@ private:
 
     bool gameOver = false;
 
-    std::vector<Move> allPossibleMoves;
-    int allPossibleMovesSize = 0;
+    FixedSizeVector<Move> allPossibleMoves { 100 };
 
     std::array<uint64_t, numBoardSquares>* knightMoves;
 
@@ -112,7 +112,7 @@ public:
     void displayBoard() const;
 
 
-    void resetAllPossibleMoves() { allPossibleMovesSize = 0; }
+    void resetAllPossibleMoves() { allPossibleMoves.clear(); }
 };
 
 #endif
