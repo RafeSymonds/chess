@@ -28,4 +28,5 @@ Nf3: 677142963 positions in 69 seconds - responds d6
 e4: 188641889 positions in 3 seconds and 3207 milliseconds - responds Nc6
 
 -- Bitboard - no more vectors
-e4: 188641889 positions in 2 seconds and 2024 milliseconds - responds Nc6
+e4:  286388528 positions in 9 seconds and 9630 milliseconds - responds e5
+Nf3: 773476390 positions in 14 seconds and 14904 milliseconds - responds Nc6

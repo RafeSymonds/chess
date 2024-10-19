@@ -130,7 +130,7 @@ void Board::getPawnMoves(bool white) {
 
         while (pawns != 0) {
             int startSquare = __builtin_ctzll(pawns);
-            pawns &= pawns - 1;   // Clear the LS1B
+            pawns &= pawns - 1;
 
             uint64_t startSquareMask = 1ULL << startSquare;
 
@@ -172,8 +172,8 @@ void Board::getPawnMoves(bool white) {
 
         uint64_t singleStep = (pawns << boardSize) & emptySquares;
         uint64_t doubleStep = ((pawns & startRow) << (boardSize * 2)) & emptySquares & (singleStep << boardSize);
-        uint64_t attackLeft = (pawns << (boardSize - 1)) & pawnAttackingRight & whitePieces;
-        uint64_t attackRight = (pawns << (boardSize + 1)) & pawnAttackingLeft & whitePieces;
+        uint64_t attackLeft = (pawns << (boardSize - 1)) & pawnAttackingLeft & whitePieces;
+        uint64_t attackRight = (pawns << (boardSize + 1)) & pawnAttackingRight & whitePieces;
 
         while (pawns != 0) {
             int startSquare = __builtin_ctzll(pawns);
@@ -1112,17 +1112,6 @@ std::vector<Move> Board::getValidMovesWithCheck() {
     // mark pinned pieces and do not let pinned pieces move off attack line
 
     allPossibleMovesSize = 0;
-    getKingMoves(whiteTurn);
-
-    for (int i = 0; i < allPossibleMovesSize; ++i) {
-        const Move& move = allPossibleMoves[i];
-        if ((move.end & combinedAttacks) == 0) {
-            // if king move ends on a non attacked square it is a valid move
-            moves.emplace_back(move);
-        }
-    }
-
-    allPossibleMovesSize = 0;
     getValidMovesNoCheckNoKing(whiteTurn);
 
     for (int i = 0; i < allPossibleMovesSize; ++i) {
@@ -1166,7 +1155,7 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             if (startCol > kingCol && endCol <= kingCol) {
                 continue;
             }
-            if (abs(startRow - kingRow) != abs(endRow - kingRow) || abs(startCol - kingCol) != abs(endCol - kingCol)) {
+            if (abs(endRow - kingRow) != abs(endCol - kingCol)) {
                 continue;
             }
             moves.emplace_back(move);
@@ -1175,6 +1164,19 @@ std::vector<Move> Board::getValidMovesWithCheck() {
             moves.emplace_back(move);
         }
     }
+
+
+    allPossibleMovesSize = 0;
+    getKingMoves(whiteTurn);
+
+    for (int i = 0; i < allPossibleMovesSize; ++i) {
+        const Move& move = allPossibleMoves[i];
+        if ((move.end & combinedAttacks) == 0) {
+            // if king move ends on a non attacked square it is a valid move
+            moves.emplace_back(move);
+        }
+    }
+
 
     return moves;
 }

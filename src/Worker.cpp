@@ -19,6 +19,13 @@ WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha,
     if (moves.size() == 0) {
         double eval = board.isWhiteTurn() ? -numeric_limits<double>::max() : numeric_limits<double>::max();
         board.unProcessMove(move, startEndPieces);
+
+        if (board.isWhiteTurn() && eval < beta) {
+            alpha = max(alpha, eval);
+        } else if (!board.isWhiteTurn() && eval > alpha) {
+            beta = min(beta, eval);
+        }
+
         return { eval, alpha, beta, 1 };
     }
 
@@ -119,7 +126,7 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
 }
 
 void Worker::processMove(const Move& move) {
-    board.processMove(move);
+    board.processMoveWithReEvaulation(move);
 }
 
 void Worker::setBoard(const Board& newBoard) {
