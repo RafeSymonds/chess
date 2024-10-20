@@ -606,7 +606,6 @@ int Board::processMoveWithReEvaulation(const Move& move) {
         }
     }
 
-
     whiteTurn = !whiteTurn;
     return pieceTypeRemoved;
 }
