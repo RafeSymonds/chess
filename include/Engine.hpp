@@ -109,7 +109,7 @@ private:
 
 
 public:
-    Engine(std::array<uint64_t, numBoardSquares>* knightMoves);
+    Engine(std::array<uint64_t, numBoardSquares>* knightMoves, BoardHashing& boardHashing);
     Engine(int threadNum, const Board& board, int depth);
     ~Engine();
 

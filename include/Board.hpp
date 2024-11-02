@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "BoardHashing.hpp"
 #include "Constants.hpp"
 #include "FixedSizeVector.hpp"
 #include "Move.hpp"
@@ -37,14 +38,18 @@ private:
 
     std::array<uint64_t, numBoardSquares>* knightMoves;
 
+
+    BoardHashing boardHashing;
+
+
     void getStraightMoves(uint64_t pieces, bool white);
     void getDiagonalMoves(uint64_t pieces, bool white);
 
 
 public:
-    Board(std::array<uint64_t, numBoardSquares>* knightMoves)
-        : Board(defaultBoardPosition, knightMoves) {}
-    Board(const std::string& fen, std::array<uint64_t, numBoardSquares>* knightMoves);
+    Board(std::array<uint64_t, numBoardSquares>* knightMoves, BoardHashing& boardHashing)
+        : Board(defaultBoardPosition, knightMoves, boardHashing) {}
+    Board(const std::string& fen, std::array<uint64_t, numBoardSquares>* knightMoves, BoardHashing& boardHashing);
 
     Board(const Board& other) = default;
 
@@ -113,6 +118,9 @@ public:
 
 
     void resetAllPossibleMoves() { allPossibleMoves.clear(); }
+
+
+    uint64_t hash() const;
 };
 
 #endif

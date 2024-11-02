@@ -11,9 +11,10 @@
 
 using namespace std;
 
-Board::Board(const string& fen, std::array<uint64_t, numBoardSquares>* knightMoves)
+Board::Board(const string& fen, std::array<uint64_t, numBoardSquares>* knightMoves, BoardHashing& boardHashing)
     : allPossibleMoves(100)
-    , knightMoves(knightMoves) {
+    , knightMoves(knightMoves)
+    , boardHashing(boardHashing) {
     uint64_t pos = 1;
 
     size_t endOfBoardIndex = fen.find(' ');
@@ -1277,4 +1278,24 @@ void Board::displayBoard() const {
         cout << i << " ";
     }
     cout << "\n";
+}
+
+
+uint64_t Board::hash() const {
+    uint64_t hashVal = 0;
+    for (int i = 0; i <= whiteKing; ++i) {
+        uint64_t pieces = pieceBB[i];
+
+        while (pieces != 0) {
+            int index = __builtin_ctzll(pieces);
+
+            pieces &= pieces - 1;
+
+            hashVal ^= boardHashing.pieceRandomNumbers[i][index];
+        }
+    }
+
+    hashVal ^= whiteTurn ? boardHashing.turnRandomNumber[0] : boardHashing.turnRandomNumber[1];
+
+    return hashVal;
 }

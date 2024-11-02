@@ -15,8 +15,8 @@
 
 
 using namespace std;
-Engine::Engine(std::array<uint64_t, numBoardSquares>* knightMoves)
-    : board(defaultBoardPosition, knightMoves)
+Engine::Engine(std::array<uint64_t, numBoardSquares>* knightMoves, BoardHashing& boardHashing)
+    : board(defaultBoardPosition, knightMoves, boardHashing)
     , workers(1, Worker(board))
     , threads(1)
     , moves(0)
@@ -165,7 +165,7 @@ void Engine::workerTask(size_t index) {
             }
         }
 
-        workers[index].resetTotalEvaluations();
+
         WorkerResult workerResult = workers[index].generateBestMove(
           currentDepth - 1, move, alphaBetaValues[currentDepth - 1].first, alphaBetaValues[currentDepth - 1].second);
 
@@ -173,7 +173,8 @@ void Engine::workerTask(size_t index) {
             std::unique_lock<std::mutex> lock(moveMutex);
 
             cout << "Finisehd " << move << " with an eval=" << workerResult.eval << " at depth " << currentDepth
-                 << " with positions evaluated=" << workerResult.positionsEvaluated << "\n"
+                 << " with positions evaluated=" << workerResult.positionsEvaluated
+                 << " and transpositions found=" << workerResult.samePositionCount << "\n"
                  << flush;
 
             moveProcessing.eval = workerResult.eval;

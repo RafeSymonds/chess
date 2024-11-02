@@ -1,6 +1,7 @@
 #include "Worker.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
 #include "Constants.hpp"
@@ -11,6 +12,8 @@ using namespace std;
 
 
 WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha, double beta) {
+    resetData();
+
     int startEndPieces = board.processMoveWithReEvaulation(move);
 
     vector<Move> moves = board.getValidMovesWithCheck();
@@ -26,7 +29,7 @@ WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha,
             beta = min(beta, eval);
         }
 
-        return { eval, alpha, beta, 1 };
+        return { eval, alpha, beta, 1, 0 };
     }
 
 
@@ -62,14 +65,28 @@ WorkerResult Worker::generateBestMove(int depth, const Move& move, double alpha,
     }
 
     board.unProcessMoveWithReEvaulation(move, startEndPieces);
-    return { value, alpha, beta, moves.size() + totalEvaluations };
+    return { value, alpha, beta, moves.size() + totalEvaluations, totalSamePositionsFound };
 }
 
 double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, double beta) {
     int previousValue = board.processMoveWithReEvaulation(move);
 
+    uint64_t hash = board.hash();
+
+    if (boardHashes.find(hash) != boardHashes.end()) {
+        ++totalSamePositionsFound;
+
+        board.unProcessMoveWithReEvaulation(move, previousValue);
+        return boardHashes[hash];
+    }
+
+
     if (depth <= 0 && previousValue == -1) {
         double eval = board.evaluation();
+
+
+        boardHashes[hash] = eval;
+
         board.unProcessMoveWithReEvaulation(move, previousValue);
 
         ++totalEvaluations;
@@ -120,6 +137,8 @@ double Worker::alphaBetaPruning(const Move& move, int depth, double alpha, doubl
             beta = min(beta, value);
         }
     }
+
+    boardHashes[hash] = value;
 
     board.unProcessMoveWithReEvaulation(move, previousValue);
     return value;
