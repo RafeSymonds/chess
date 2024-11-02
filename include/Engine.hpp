@@ -95,6 +95,8 @@ private:
     double alpha;
     double beta;
 
+    std::vector<std::pair<double, double>> alphaBetaValues;
+
     std::atomic<size_t> totalPositionsEvaluated;
 
 

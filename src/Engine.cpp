@@ -24,6 +24,7 @@ Engine::Engine(std::array<uint64_t, numBoardSquares>* knightMoves)
     , depth(1)
     , alpha(-numeric_limits<double>::max())
     , beta(numeric_limits<double>::max())
+    , alphaBetaValues(1, { -numeric_limits<double>::max(), numeric_limits<double>::max() })
     , totalPositionsEvaluated(0) {
     generateWorkers();
 }
@@ -36,6 +37,7 @@ Engine::Engine(int threadNum, const Board& board, int depth)
     , depth(depth)
     , alpha(-numeric_limits<double>::max())
     , beta(numeric_limits<double>::max())
+    , alphaBetaValues(depth, { -numeric_limits<double>::max(), numeric_limits<double>::max() })
     , totalPositionsEvaluated(0) {
     generateWorkers();
 }
@@ -164,7 +166,8 @@ void Engine::workerTask(size_t index) {
         }
 
         workers[index].resetTotalEvaluations();
-        WorkerResult workerResult = workers[index].generateBestMove(currentDepth - 1, move, alpha, beta);
+        WorkerResult workerResult = workers[index].generateBestMove(
+          currentDepth - 1, move, alphaBetaValues[currentDepth - 1].first, alphaBetaValues[currentDepth - 1].second);
 
         {
             std::unique_lock<std::mutex> lock(moveMutex);
@@ -178,10 +181,13 @@ void Engine::workerTask(size_t index) {
             finalMoveResults.insert(moveProcessing);
 
             if (board.isWhiteTurn()) {
-                alpha = max(alpha, workerResult.alpha);
+                alphaBetaValues[currentDepth - 1].first
+                  = max(alphaBetaValues[currentDepth - 1].first, workerResult.alpha);
             } else {
-                beta = min(beta, workerResult.beta);
+                alphaBetaValues[currentDepth - 1].second
+                  = min(alphaBetaValues[currentDepth - 1].second, workerResult.beta);
             }
+
 
             if (currentDepth != depth) {
                 movesNeedingProcessing.emplace(move, currentDepth + 1, workerResult.eval);
