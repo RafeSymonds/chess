@@ -37,7 +37,7 @@ $(BUILD_DIR)/$(EXECUTABLE)_debug: $(SOURCES)
 .PHONY: debug
 
 # Release target
-release: CXXFLAGS += -Ofast -DNDEBUG
+release: CXXFLAGS += -O3 -ffast-math -DNDEBUG
 release: $(BUILD_DIR)/$(EXECUTABLE)
 
 $(BUILD_DIR)/$(EXECUTABLE): $(OBJECTS)
